@@ -38,8 +38,4 @@ public class SortUtil {
             }
         }
     }
-
-    public static void sortASC(List<? extends Entity> entityList) {
-        sort(entityList, (o1, o2) -> compare(o1.getOrder(), o2.getOrder()));
-    }
 }

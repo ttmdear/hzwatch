@@ -7,11 +7,6 @@ public abstract class Entity {
     public Entity() {
     }
 
-    public Entity(Integer id, Integer order) {
-        this.id = id;
-        this.order = order;
-    }
-
     public Integer getId() {
         return id;
     }
@@ -27,5 +22,4 @@ public abstract class Entity {
     public void setOrder(Integer order) {
         this.order = order;
     }
-
 }
