@@ -5,7 +5,7 @@ import java.util.Date;
 public class SearchLog extends Entity {
     private Date at;
     private String searchKey;
-    private int itemsNumber;
+    private int productsNumber;
 
     public SearchLog() {
     }
@@ -28,12 +28,12 @@ public class SearchLog extends Entity {
         notifyChange();
     }
 
-    public int getItemsNumber() {
-        return itemsNumber;
+    public int getProductsNumber() {
+        return productsNumber;
     }
 
-    public void setItemsNumber(int itemsNumber) {
-        this.itemsNumber = itemsNumber;
+    public void setProductsNumber(int productsNumber) {
+        this.productsNumber = productsNumber;
         notifyChange();
     }
 }

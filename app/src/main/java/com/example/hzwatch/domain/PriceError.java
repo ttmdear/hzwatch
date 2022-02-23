@@ -5,8 +5,9 @@ import java.util.Date;
 public class PriceError extends Entity {
     private String product;
     private String url;
-    private boolean checked;
     private Date at;
+    private Double price;
+    private Double avr;
 
     public PriceError() {
     }
@@ -29,21 +30,30 @@ public class PriceError extends Entity {
         notifyChange();
     }
 
-    public boolean isChecked() {
-        return checked;
-    }
-
-    public void setChecked(boolean checked) {
-        this.checked = checked;
-        notifyChange();
-    }
-
     public Date getAt() {
         return at;
     }
 
     public void setAt(Date at) {
         this.at = at;
+        notifyChange();
+    }
+
+    public Double getPrice() {
+        return price;
+    }
+
+    public void setPrice(Double price) {
+        this.price = price;
+        notifyChange();
+    }
+
+    public Double getAvr() {
+        return avr;
+    }
+
+    public void setAvr(Double avr) {
+        this.avr = avr;
         notifyChange();
     }
 }

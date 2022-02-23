@@ -14,9 +14,9 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.View;
 
 import com.example.hzwatch.databinding.ActivityMainBinding;
+import com.example.hzwatch.service.Services;
 import com.example.hzwatch.service.Storage;
 import com.example.hzwatch.service.StorageSaverService;
 import com.example.hzwatch.service.WatcherService;
@@ -26,7 +26,7 @@ import java.util.Arrays;
 public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
 
-    private Storage storage = Storage.getInstance();
+    private Storage storage = Services.getStorage();
     private BroadcastReceiver watcherReceiver;
     private PriceErrorListFragment priceErrorListFragment;
     private SearchLogListFragment searchLogListFragment;
@@ -39,7 +39,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         storage.setContext(this);
-        storage.clean();
         storage.load();
 
         priceErrorListFragment = new PriceErrorListFragment();

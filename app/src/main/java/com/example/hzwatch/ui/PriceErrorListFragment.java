@@ -2,6 +2,10 @@ package com.example.hzwatch.ui;
 
 import static android.view.View.GONE;
 
+import static java.lang.String.format;
+
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,14 +19,17 @@ import com.example.hzwatch.databinding.PriceErrorListBinding;
 import com.example.hzwatch.databinding.StandardRecyclerItemBinding;
 import com.example.hzwatch.domain.PriceError;
 import com.example.hzwatch.domain.SearchLog;
+import com.example.hzwatch.service.Services;
 import com.example.hzwatch.service.Storage;
+import com.example.hzwatch.service.UiService;
 import com.example.hzwatch.util.SortUtil;
 
 import java.util.List;
 
 public class PriceErrorListFragment extends Fragment {
     private PriceErrorListBinding binding;
-    private final Storage storage = Storage.getInstance();
+    private final Storage storage = Services.getStorage();
+    private final UiService uiService = Services.getUiService();
     private StandardRecyclerAdapter<PriceError, StandardRecyclerItemBinding> recyclerAdapter;
 
     @Override
@@ -33,12 +40,18 @@ public class PriceErrorListFragment extends Fragment {
             @Override
             public void bind(StandardRecyclerItemBinding binding, PriceError item) {
                 binding.sriName.setText(item.getProduct());
-                binding.sriDescription.setVisibility(GONE);
+                binding.sriDescription.setText(format("Cena %s do śr. %s / %s", item.getPrice(), item.getAvr(), uiService.formatReadDateTime(item.getAt())));
             }
 
             @Override
             public StandardRecyclerItemBinding create(View item) {
                 return StandardRecyclerItemBinding.bind(item);
+            }
+
+            @Override
+            public boolean onClickAction(PriceError priceError) {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(priceError.getUrl())));
+                return false;
             }
         });
 

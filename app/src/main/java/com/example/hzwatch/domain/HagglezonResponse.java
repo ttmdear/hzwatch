@@ -1,7 +1,5 @@
 package com.example.hzwatch.domain;
 
-import android.content.Intent;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.List;
@@ -74,20 +72,20 @@ public class HagglezonResponse {
             this.id = id;
         }
 
-        public String getTitle() {
-            return title;
-        }
-
-        public void setTitle(String title) {
-            this.title = title;
-        }
-
         public List<Price> getPrices() {
             return prices;
         }
 
         public void setPrices(List<Price> prices) {
             this.prices = prices;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public void setTitle(String title) {
+            this.title = title;
         }
     }
 
@@ -110,20 +108,20 @@ public class HagglezonResponse {
             this.country = country;
         }
 
-        public Double getPrice() {
-            return price;
-        }
-
-        public void setPrice(Double price) {
-            this.price = price;
-        }
-
         public String getCurrency() {
             return currency;
         }
 
         public void setCurrency(String currency) {
             this.currency = currency;
+        }
+
+        public Double getPrice() {
+            return price;
+        }
+
+        public void setPrice(Double price) {
+            this.price = price;
         }
 
         public String getUrl() {

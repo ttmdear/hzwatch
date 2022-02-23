@@ -11,7 +11,7 @@ import com.example.hzwatch.util.Util;
 import java.util.Date;
 
 public class StorageSaverService extends Service implements Runnable {
-    private final Storage storage = Storage.getInstance();
+    private final Storage storage = Services.getStorage();
     private Thread thread = null;
     private boolean stop = false;
 

@@ -24,7 +24,6 @@ public class Storage {
     private static final String FILE_NAME = "hzwatch.json";
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
-    private static Storage instance;
     private static int SEQ = 0;
 
     private String searchKeyList;
@@ -35,12 +34,9 @@ public class Storage {
     private boolean isChange = false;
     private Context context;
 
-    public static Storage getInstance() {
-        if (instance == null) {
-            instance = new Storage();
-        }
-
-        return instance;
+    public void clean() {
+        initEmptyStorage();
+        save();
     }
 
     public void create(PriceError priceError) {
@@ -51,11 +47,6 @@ public class Storage {
     public void create(SearchLog searchLog) {
         searchLog.setStorage(this);
         searchLogList.add(searchLog);
-    }
-
-    public void clean() {
-        initEmptyStorage();
-        save();
     }
 
     public List<PriceError> findPriceError() {

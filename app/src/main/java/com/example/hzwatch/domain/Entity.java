@@ -19,6 +19,7 @@ public abstract class Entity {
 
     public void setId(Integer id) {
         this.id = id;
+        notifyChange();
     }
 
     public Integer getOrder() {
@@ -27,6 +28,7 @@ public abstract class Entity {
 
     public void setOrder(Integer order) {
         this.order = order;
+        notifyChange();
     }
 
     protected void notifyChange() {

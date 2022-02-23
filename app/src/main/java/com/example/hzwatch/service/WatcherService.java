@@ -41,7 +41,7 @@ public class WatcherService extends Service implements Runnable {
     private boolean stop = false;
 
     public static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
-    private final Storage storage = Storage.getInstance();
+    private final Storage storage = Services.getStorage();
 
     @Nullable
     @Override
@@ -114,7 +114,7 @@ public class WatcherService extends Service implements Runnable {
             log.setSearchKey(searchKey);
             log.setId(storage.id());
             log.setAt(Util.date());
-            log.setItemsNumber(0);
+            log.setProductsNumber(0);
 
             int page = 0;
             while(true) {
@@ -125,7 +125,7 @@ public class WatcherService extends Service implements Runnable {
                     break;
                 }
 
-                log.setItemsNumber(log.getItemsNumber() + response.getData().getSearchProducts().getProducts().size());
+                log.setProductsNumber(log.getProductsNumber() + response.getData().getSearchProducts().getProducts().size());
 
                 processResponse(searchKey, response);
 
@@ -193,8 +193,9 @@ public class WatcherService extends Service implements Runnable {
                 priceError.setId(storage.id());
                 priceError.setProduct(product.getTitle());
                 priceError.setUrl(priceList.get(i).getUrl());
-                priceError.setChecked(false);
                 priceError.setAt(Util.date());
+                priceError.setPrice(price);
+                priceError.setAvr(avr);
 
                 return priceError;
             }

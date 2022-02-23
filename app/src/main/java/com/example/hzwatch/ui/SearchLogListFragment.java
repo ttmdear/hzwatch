@@ -13,16 +13,18 @@ import com.example.hzwatch.R;
 import com.example.hzwatch.databinding.SearchLogListBinding;
 import com.example.hzwatch.databinding.StandardRecyclerItemBinding;
 import com.example.hzwatch.domain.SearchLog;
+import com.example.hzwatch.service.Services;
 import com.example.hzwatch.service.Storage;
+import com.example.hzwatch.service.UiService;
 import com.example.hzwatch.ui.StandardRecyclerAdapter.Controller;
 import com.example.hzwatch.util.SortUtil;
-import com.example.hzwatch.util.Util;
 
 import java.util.List;
 
 public class SearchLogListFragment extends Fragment {
     private SearchLogListBinding binding;
-    private Storage storage = Storage.getInstance();
+    private final Storage storage = Services.getStorage();
+    private final UiService uiService = Services.getUiService();
     private StandardRecyclerAdapter<SearchLog, StandardRecyclerItemBinding> recyclerAdapter;
 
     @Override
@@ -33,7 +35,7 @@ public class SearchLogListFragment extends Fragment {
             @Override
             public void bind(StandardRecyclerItemBinding binding, SearchLog item) {
                 binding.sriName.setText(item.getSearchKey());
-                binding.sriDescription.setText("Liczba produktów " + item.getItemsNumber());
+                binding.sriDescription.setText(String.format("Liczba produktów %s / %s", item.getProductsNumber(), uiService.formatReadDateTime(item.getAt())));
             }
 
             @Override
