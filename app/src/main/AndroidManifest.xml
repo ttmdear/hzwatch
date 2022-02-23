@@ -13,6 +13,7 @@
         android:theme="@style/Theme.Hzwatch">
         <activity
             android:name=".ui.MainActivity"
+            android:theme="@style/Theme.Hzwatch.NoActionBar"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -21,6 +22,7 @@
             </intent-filter>
         </activity>
         <service android:name=".service.WatcherService" />
+        <service android:name=".service.StorageSaverService" />
     </application>
 
 </manifest>

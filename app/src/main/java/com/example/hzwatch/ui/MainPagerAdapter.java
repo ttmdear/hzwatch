@@ -8,11 +8,11 @@ import androidx.fragment.app.FragmentPagerAdapter;
 
 import java.util.List;
 
-public class MainTabAdapter extends FragmentPagerAdapter {
+public class MainPagerAdapter extends FragmentPagerAdapter {
 
     private final List<Fragment> fragmentList;
 
-    public MainTabAdapter(@NonNull FragmentManager fm, int behavior, List<Fragment> fragmentList) {
+    public MainPagerAdapter(@NonNull FragmentManager fm, int behavior, List<Fragment> fragmentList) {
         super(fm, behavior);
 
         this.fragmentList = fragmentList;

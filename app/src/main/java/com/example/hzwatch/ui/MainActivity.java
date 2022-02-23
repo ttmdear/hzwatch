@@ -1,15 +1,24 @@
 package com.example.hzwatch.ui;
 
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.View;
 
 import com.example.hzwatch.databinding.ActivityMainBinding;
 import com.example.hzwatch.service.Storage;
+import com.example.hzwatch.service.StorageSaverService;
 import com.example.hzwatch.service.WatcherService;
 
 import java.util.Arrays;
@@ -18,6 +27,9 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
 
     private Storage storage = Storage.getInstance();
+    private BroadcastReceiver watcherReceiver;
+    private PriceErrorListFragment priceErrorListFragment;
+    private SearchLogListFragment searchLogListFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,7 +38,23 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        storage.setContext(this);
+        storage.clean();
         storage.load();
+
+        priceErrorListFragment = new PriceErrorListFragment();
+        searchLogListFragment = new SearchLogListFragment();
+
+        watcherReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                priceErrorListFragment.notifyChange();
+                searchLogListFragment.notifyChange();
+                updateOkSeeButton();
+            }
+        };
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(watcherReceiver, new IntentFilter(WatcherService.ACTION_CHANGE));
 
         // Init text
         binding.searchKeyList.setText(storage.getSearchKeyList() == null ? "" : storage.getSearchKeyList());
@@ -43,12 +71,34 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        binding.amOkSee.setOnClickListener(v -> {
+            storage.setPriceError(false);
+            updateOkSeeButton();
+        });
+
         // Init tabs
         binding.tabLayout.setupWithViewPager(binding.viewPager);
 
-        MainTabAdapter mainTabAdapter = new MainTabAdapter(getSupportFragmentManager(), FragmentPagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT, Arrays.asList(new PriceErrorList(), new SearchLogList()));
-        binding.viewPager.setAdapter(mainTabAdapter);
+        MainPagerAdapter mainPagerAdapter = new MainPagerAdapter(getSupportFragmentManager(), FragmentPagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT, Arrays.asList(priceErrorListFragment, searchLogListFragment));
+        binding.viewPager.setAdapter(mainPagerAdapter);
+
+        updateOkSeeButton();
 
         startService(new Intent(this, WatcherService.class));
+        startService(new Intent(this, StorageSaverService.class));
+    }
+
+    private void updateOkSeeButton() {
+        if (storage.isPriceError()) {
+            binding.amOkSee.setVisibility(VISIBLE);
+        } else {
+            binding.amOkSee.setVisibility(GONE);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(watcherReceiver);
     }
 }

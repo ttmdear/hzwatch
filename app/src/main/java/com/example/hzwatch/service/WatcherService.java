@@ -4,8 +4,10 @@ import android.app.Service;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.IBinder;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.hzwatch.R;
 import com.example.hzwatch.domain.HagglezonResponse;
@@ -19,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Random;
 
 import okhttp3.MediaType;
@@ -29,15 +30,18 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class WatcherService extends Service implements Runnable {
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final Random RANDOM = new Random();
-    private MediaPlayer player;
-
     private static final String TAG = "WatcherService";
 
+    public static final String ACTION_CHANGE = "WatcherService.Action.Change";
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final Random RANDOM = new Random();
+    private MediaPlayer playerAlarm;
+    private MediaPlayer playerBeep;
+    private Thread thread;
+    private boolean stop = false;
+
     public static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
-    private Storage storage = Storage.getInstance();
-    private Date lastSearch;
+    private final Storage storage = Storage.getInstance();
 
     @Nullable
     @Override
@@ -46,35 +50,53 @@ public class WatcherService extends Service implements Runnable {
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+        stop = true;
+    }
+
+    @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        player = MediaPlayer.create(this, R.raw.alarm);
-        new Thread(this).start();
+        Log.d(TAG, "onStartCommand: begin");
+        playerAlarm = MediaPlayer.create(this, R.raw.alarm);
+        playerBeep = MediaPlayer.create(this, R.raw.beep_long);
+
+        if (thread == null) {
+            thread = new Thread(this);
+            thread.start();
+        }
 
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public void run() {
-        lastSearch = Util.date();
+        Date lastSearch = Util.date();
 
         while(true) {
-            while(Util.find(storage.findPriceError(), priceError -> !priceError.isChecked()) != null) {
-                player.start();
+            if (stop) return;
+
+            while(storage.isPriceError()) {
+                playerBeep.start();
+                Util.sleep(100);
             }
 
-            if (Util.secondsFrom(lastSearch) > 10) {
-                // runSeach();
-
+            if (Util.secondsFrom(lastSearch) > 60) {
+                runSearch();
+                playerBeep.start();
                 lastSearch = Util.date();
+                sendBroadcastActionChange();
             }
 
             Util.sleep(500);
         }
     }
 
-    private void runSeach() {
+    private void runSearch() {
+        Log.d(TAG, "runSearch: begin");
+
         String searchKeyString = storage.getSearchKeyList();
-        searchKeyString = "smartphone,car,phone";
+        Log.d(TAG, "runSearch: searchKeyString " + searchKeyString);
 
         if (searchKeyString == null || searchKeyString.isEmpty()) {
             return;
@@ -84,10 +106,12 @@ public class WatcherService extends Service implements Runnable {
 
         for (String searchKey : searchKeyArray) {
             searchKey = searchKey.trim();
+            Log.d(TAG, "runSearch: searchKey " + searchKey);
 
             if (searchKey.isEmpty()) continue;
 
             SearchLog log = new SearchLog();
+            log.setSearchKey(searchKey);
             log.setId(storage.id());
             log.setAt(Util.date());
             log.setItemsNumber(0);
@@ -95,6 +119,7 @@ public class WatcherService extends Service implements Runnable {
             int page = 0;
             while(true) {
                 HagglezonResponse response = search(searchKey, ++page);
+                Log.d(TAG, "runSearch: response " + response);
 
                 if (isEmptyResponse(response)) {
                     break;
@@ -120,6 +145,8 @@ public class WatcherService extends Service implements Runnable {
     }
 
     private void processResponse(String searchKey, HagglezonResponse response) {
+        Log.d(TAG, "processResponse: for searchKey " + searchKey);
+
         for (Product product : response.getData().getSearchProducts().getProducts()) {
             PriceError priceError = checkPriceError(product);
             if (priceError != null) {
@@ -130,10 +157,20 @@ public class WatcherService extends Service implements Runnable {
 
     private void processPriceError(PriceError priceError) {
         storage.create(priceError);
+        storage.setPriceError(true);
+        sendBroadcastActionChange();
+    }
+
+    private void sendBroadcastActionChange() {
+        LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(ACTION_CHANGE));
     }
 
     private PriceError checkPriceError(Product product) {
         if (product.getPrices().size() <= 1) return null;
+
+        boolean saved = Util.find(storage.findPriceError(), o -> o.getProduct().equals(product.getTitle())) != null;
+
+        if (saved) return null;
 
         List<Price> priceList = Util.filter(product.getPrices(), price -> price.getPrice() != null);
 
@@ -157,6 +194,7 @@ public class WatcherService extends Service implements Runnable {
                 priceError.setProduct(product.getTitle());
                 priceError.setUrl(priceList.get(i).getUrl());
                 priceError.setChecked(false);
+                priceError.setAt(Util.date());
 
                 return priceError;
             }
@@ -166,7 +204,7 @@ public class WatcherService extends Service implements Runnable {
     }
 
     private HagglezonResponse search(String search, int page) {
-        String body = "{\"operationName\":\"SearchResults\",\"variables\":{\"lang\":\"en\",\"currency\":\"EUR\",\"filters\":{},\"search\":\"" + search + "\",\"page\":" + page + ",\"country\":\"de\"},\"query\":\"query SearchResults($search: String!, $country: String, $currency: String!, $lang: String!, $page: Int, $filters: SearchFilters) {\\n  searchProducts(searchTerm: $search, country: $country, productConfig: {language: $lang, currency: $currency}, page: $page, filters: $filters) {\\n    products {\\n      id\\n      title\\n      brand\\n      tags\\n      related_items\\n      prices {\\n        country\\n        price\\n        currency\\n        url\\n        __typename\\n      }\\n      all_images {\\n        medium\\n        large\\n        __typename\\n      }\\n      __typename\\n    }\\n    next {\\n      country\\n      page\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n\"}";
+        String body = "{\"operationName\":\"SearchResults\",\"variables\":{\"lang\":\"en\",\"currency\":\"PLN\",\"filters\":{},\"search\":\"" + search + "\",\"page\":" + page + ",\"country\":\"de\"},\"query\":\"query SearchResults($search: String!, $country: String, $currency: String!, $lang: String!, $page: Int, $filters: SearchFilters) {\\n  searchProducts(searchTerm: $search, country: $country, productConfig: {language: $lang, currency: $currency}, page: $page, filters: $filters) {\\n    products {\\n      id\\n      title\\n      brand\\n      tags\\n      related_items\\n      prices {\\n        country\\n        price\\n        currency\\n        url\\n        __typename\\n      }\\n      all_images {\\n        medium\\n        large\\n        __typename\\n      }\\n      __typename\\n    }\\n    next {\\n      country\\n      page\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n\"}";
 
         Request request = new Request.Builder()
             .url("https://graphql.hagglezon.com")

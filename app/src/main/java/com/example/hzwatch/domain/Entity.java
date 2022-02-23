@@ -1,8 +1,14 @@
 package com.example.hzwatch.domain;
 
+import com.example.hzwatch.service.Storage;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public abstract class Entity {
     private Integer id;
     private Integer order;
+
+    @JsonIgnore
+    private Storage storage;
 
     public Entity() {
     }
@@ -21,5 +27,15 @@ public abstract class Entity {
 
     public void setOrder(Integer order) {
         this.order = order;
+    }
+
+    protected void notifyChange() {
+        if (storage != null) {
+            storage.notifyChange();
+        }
+    }
+
+    public void setStorage(Storage storage) {
+        this.storage = storage;
     }
 }

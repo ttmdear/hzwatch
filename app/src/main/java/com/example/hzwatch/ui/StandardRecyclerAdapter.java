@@ -1,5 +1,6 @@
 package com.example.hzwatch.ui;
 
+import android.annotation.SuppressLint;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -18,8 +19,9 @@ import java.util.List;
 
 public class StandardRecyclerAdapter<T extends Entity, B> extends RecyclerView.Adapter<StandardRecyclerAdapter.StandardViewHolder<T, B>> {
     private final int layoutId;
-    private final List<T> items;
     private final Controller<T, B> controller;
+
+    private List<T> items;
 
     public StandardRecyclerAdapter(List<T> items, Controller<T, B> controller) {
         this.layoutId = R.layout.standard_recycler_item;
@@ -31,6 +33,12 @@ public class StandardRecyclerAdapter<T extends Entity, B> extends RecyclerView.A
         this.layoutId = layoutId;
         this.items = items;
         this.controller = controller;
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    public void setItems(List<T> items) {
+        this.items = items;
+        notifyDataSetChanged();
     }
 
     @Override

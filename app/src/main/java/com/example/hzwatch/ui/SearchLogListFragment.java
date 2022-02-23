@@ -15,10 +15,12 @@ import com.example.hzwatch.databinding.StandardRecyclerItemBinding;
 import com.example.hzwatch.domain.SearchLog;
 import com.example.hzwatch.service.Storage;
 import com.example.hzwatch.ui.StandardRecyclerAdapter.Controller;
+import com.example.hzwatch.util.SortUtil;
+import com.example.hzwatch.util.Util;
 
 import java.util.List;
 
-public class SearchLogList extends Fragment {
+public class SearchLogListFragment extends Fragment {
     private SearchLogListBinding binding;
     private Storage storage = Storage.getInstance();
     private StandardRecyclerAdapter<SearchLog, StandardRecyclerItemBinding> recyclerAdapter;
@@ -27,12 +29,11 @@ public class SearchLogList extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = SearchLogListBinding.inflate(inflater, container, false);
 
-        List<SearchLog> logList = storage.findSearchLog();
-
-        recyclerAdapter = new StandardRecyclerAdapter<>(R.layout.standard_recycler_item, logList, new Controller<SearchLog, StandardRecyclerItemBinding>() {
+        recyclerAdapter = new StandardRecyclerAdapter<>(R.layout.standard_recycler_item, prepareList(), new Controller<SearchLog, StandardRecyclerItemBinding>() {
             @Override
             public void bind(StandardRecyclerItemBinding binding, SearchLog item) {
                 binding.sriName.setText(item.getSearchKey());
+                binding.sriDescription.setText("Liczba produktów " + item.getItemsNumber());
             }
 
             @Override
@@ -45,5 +46,16 @@ public class SearchLogList extends Fragment {
         binding.sllList.setLayoutManager(new LinearLayoutManager(getContext()));
 
         return binding.getRoot();
+    }
+
+    public void notifyChange() {
+        recyclerAdapter.setItems(prepareList());
+    }
+
+    private List<SearchLog> prepareList() {
+        List<SearchLog> searchLogList = storage.findSearchLog();
+        SortUtil.sort(searchLogList, (o1, o2) -> o1.getAt().compareTo(o2.getAt()));
+
+        return searchLogList;
     }
 }

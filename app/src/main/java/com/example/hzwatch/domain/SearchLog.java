@@ -16,6 +16,7 @@ public class SearchLog extends Entity {
 
     public void setAt(Date at) {
         this.at = at;
+        notifyChange();
     }
 
     public String getSearchKey() {
@@ -24,6 +25,7 @@ public class SearchLog extends Entity {
 
     public void setSearchKey(String searchKey) {
         this.searchKey = searchKey;
+        notifyChange();
     }
 
     public int getItemsNumber() {
@@ -32,5 +34,6 @@ public class SearchLog extends Entity {
 
     public void setItemsNumber(int itemsNumber) {
         this.itemsNumber = itemsNumber;
+        notifyChange();
     }
 }

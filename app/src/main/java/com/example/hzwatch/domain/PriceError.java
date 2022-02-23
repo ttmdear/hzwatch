@@ -1,9 +1,12 @@
 package com.example.hzwatch.domain;
 
+import java.util.Date;
+
 public class PriceError extends Entity {
     private String product;
     private String url;
     private boolean checked;
+    private Date at;
 
     public PriceError() {
     }
@@ -14,6 +17,7 @@ public class PriceError extends Entity {
 
     public void setProduct(String product) {
         this.product = product;
+        notifyChange();
     }
 
     public String getUrl() {
@@ -22,6 +26,7 @@ public class PriceError extends Entity {
 
     public void setUrl(String url) {
         this.url = url;
+        notifyChange();
     }
 
     public boolean isChecked() {
@@ -30,5 +35,15 @@ public class PriceError extends Entity {
 
     public void setChecked(boolean checked) {
         this.checked = checked;
+        notifyChange();
+    }
+
+    public Date getAt() {
+        return at;
+    }
+
+    public void setAt(Date at) {
+        this.at = at;
+        notifyChange();
     }
 }
