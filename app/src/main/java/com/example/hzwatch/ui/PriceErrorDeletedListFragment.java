@@ -13,7 +13,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.hzwatch.R;
-import com.example.hzwatch.databinding.PriceErrorListBinding;
+import com.example.hzwatch.databinding.PriceErrorDeletedListBinding;
 import com.example.hzwatch.databinding.StandardRecyclerItemBinding;
 import com.example.hzwatch.domain.PriceError;
 import com.example.hzwatch.service.Services;
@@ -24,10 +24,10 @@ import com.example.hzwatch.util.SortUtil;
 import java.util.Collections;
 import java.util.List;
 
-public class PriceErrorListFragment extends Fragment {
+public class PriceErrorDeletedListFragment extends Fragment {
     private final Storage storage = Services.getStorage();
     private final UiService uiService = Services.getUiService();
-    private PriceErrorListBinding binding;
+    private PriceErrorDeletedListBinding binding;
     private StandardRecyclerAdapter<PriceError, StandardRecyclerItemBinding> recyclerAdapter;
 
     public void notifyChange() {
@@ -38,17 +38,14 @@ public class PriceErrorListFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        binding = PriceErrorListBinding.inflate(inflater, container, false);
+        binding = PriceErrorDeletedListBinding.inflate(inflater, container, false);
 
-        recyclerAdapter = new StandardRecyclerAdapter<>(R.layout.standard_recycler_item, Collections.emptyList(), new StandardRecyclerAdapter.Controller<PriceError, StandardRecyclerItemBinding>() {
+        recyclerAdapter = new StandardRecyclerAdapter<>(R.layout.standard_recycler_item, prepareList(), new StandardRecyclerAdapter.Controller<PriceError, StandardRecyclerItemBinding>() {
             @Override
             public void bind(StandardRecyclerItemBinding binding, PriceError priceError) {
                 binding.sriName.setText(priceError.getProduct());
                 binding.sriDescription.setText(format("Cena %s do śr. %s / %s", priceError.getPrice(), priceError.getAvr(), uiService.formatReadDateTime(priceError.getAt())));
-                binding.sriDelete.setOnClickListener(v -> {
-                    storage.deletePriceError(priceError.getId());
-                    notifyChange();
-                });
+                binding.sriDelete.setVisibility(View.GONE);
             }
 
             @Override
@@ -63,14 +60,14 @@ public class PriceErrorListFragment extends Fragment {
             }
         });
 
-        binding.prlList.setAdapter(recyclerAdapter);
-        binding.prlList.setLayoutManager(new LinearLayoutManager(getContext()));
+        binding.pedlList.setAdapter(recyclerAdapter);
+        binding.pedlList.setLayoutManager(new LinearLayoutManager(getContext()));
 
         return binding.getRoot();
     }
 
     private List<PriceError> prepareList() {
-        List<PriceError> list = storage.findPriceError();
+        List<PriceError> list = storage.findPriceErrorDeleted();
         SortUtil.sort(list, (o1, o2) -> o1.getAt().compareTo(o2.getAt()));
 
         return list;

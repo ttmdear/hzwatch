@@ -36,6 +36,8 @@ public class MainPagerAdapter extends FragmentPagerAdapter {
             return "Błędy cenowe";
         } else if (position == 1) {
             return "Log";
+        } else if (position == 2) {
+            return "Usunięte";
         } else {
             return "";
         }

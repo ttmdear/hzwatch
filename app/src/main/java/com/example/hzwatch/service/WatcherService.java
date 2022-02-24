@@ -76,12 +76,12 @@ public class WatcherService extends Service implements Runnable {
         while(true) {
             if (stop) return;
 
-            while(storage.isPriceError()) {
+            while(storage.getPriceError()) {
                 playerBeep.start();
                 Util.sleep(100);
             }
 
-            if (Util.secondsFrom(lastSearch) > 60) {
+            if (Util.secondsFrom(lastSearch) > 120) {
                 runSearch();
                 playerBeep.start();
                 lastSearch = Util.date();
@@ -205,7 +205,7 @@ public class WatcherService extends Service implements Runnable {
     }
 
     private HagglezonResponse search(String search, int page) {
-        String body = "{\"operationName\":\"SearchResults\",\"variables\":{\"lang\":\"en\",\"currency\":\"PLN\",\"filters\":{},\"search\":\"" + search + "\",\"page\":" + page + ",\"country\":\"de\"},\"query\":\"query SearchResults($search: String!, $country: String, $currency: String!, $lang: String!, $page: Int, $filters: SearchFilters) {\\n  searchProducts(searchTerm: $search, country: $country, productConfig: {language: $lang, currency: $currency}, page: $page, filters: $filters) {\\n    products {\\n      id\\n      title\\n      brand\\n      tags\\n      related_items\\n      prices {\\n        country\\n        price\\n        currency\\n        url\\n        __typename\\n      }\\n      all_images {\\n        medium\\n        large\\n        __typename\\n      }\\n      __typename\\n    }\\n    next {\\n      country\\n      page\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n\"}";
+        String body = "{\"operationName\":\"SearchResults\",\"variables\":{\"lang\":\"en\",\"currency\":\"EUR\",\"filters\":{},\"search\":\"" + search + "\",\"page\":" + page + ",\"country\":\"de\"},\"query\":\"query SearchResults($search: String!, $country: String, $currency: String!, $lang: String!, $page: Int, $filters: SearchFilters) {\\n  searchProducts(searchTerm: $search, country: $country, productConfig: {language: $lang, currency: $currency}, page: $page, filters: $filters) {\\n    products {\\n      id\\n      title\\n      brand\\n      tags\\n      related_items\\n      prices {\\n        country\\n        price\\n        currency\\n        url\\n        __typename\\n      }\\n      all_images {\\n        medium\\n        large\\n        __typename\\n      }\\n      __typename\\n    }\\n    next {\\n      country\\n      page\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n\"}";
 
         Request request = new Request.Builder()
             .url("https://graphql.hagglezon.com")
@@ -215,7 +215,7 @@ public class WatcherService extends Service implements Runnable {
             .addHeader("Cache-control", "no-cache")
             .addHeader("Content-Length", "811")
             .addHeader("Content-Type", "application/json")
-            .addHeader("Cookie", "_ga=GA1.2.1117157207.1645480775; _gid=GA1.2.195309118.1645480775; _gat=1; __cf_bm=Ub3wU5MyLxCCoNFlL_cd3P_FCAiLj3IMxZ.YRRn8zLU-1645480774-0-AdhMrBwZwZTvCoXumnnpakxBez32tnk9Eruc0Djh2cwYYzYNJGjbiIsRWKKAcNXxrHrASSzi30R1Y66WEnb+0suY3DeAJH9LeRJTjrqhYyHvs2bko9sEKH5hqS1MHP+p+g==")
+            .addHeader("Cookie", "_ga=GA1.2.1390425837.1645716030; _gid=GA1.2.1282820129.1645716030; _gat=1; __cf_bm=VcyJK_IqrV3vEH0LXAsTpOc4na6pC1t2_IaVhaGv88o-1645716029-0-AdEGnr2mLzVEQ0FF6hkpSNiI+1HSQwRHz2H+wtuFSh2Ln2S7MHL2ZE07K+fuP+q9rwXBzZP2gh2Vgb/x08tRaFAthpNtmCqLPfZnPEgEIpySjJmNHyD4RAZ80YumCfy8ng==")
             .addHeader("Origin", "https://www.hagglezon.com")
             .addHeader("Pragma", "no-cache")
             .addHeader("Referer", "https://www.hagglezon.com/en/s/" + search)

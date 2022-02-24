@@ -30,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private BroadcastReceiver watcherReceiver;
     private PriceErrorListFragment priceErrorListFragment;
     private SearchLogListFragment searchLogListFragment;
+    private PriceErrorDeletedListFragment priceErrorDeletedListFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
 
         priceErrorListFragment = new PriceErrorListFragment();
         searchLogListFragment = new SearchLogListFragment();
+        priceErrorDeletedListFragment = new PriceErrorDeletedListFragment();
 
         watcherReceiver = new BroadcastReceiver() {
             @Override
@@ -75,10 +77,18 @@ public class MainActivity extends AppCompatActivity {
             updateOkSeeButton();
         });
 
+        binding.amSearchKeyList.setOnLongClickListener(v -> {
+            startActivity(new Intent(this, DevelopActivity.class));
+            return false;
+        });
+
         // Init tabs
         binding.tabLayout.setupWithViewPager(binding.viewPager);
 
-        MainPagerAdapter mainPagerAdapter = new MainPagerAdapter(getSupportFragmentManager(), FragmentPagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT, Arrays.asList(priceErrorListFragment, searchLogListFragment));
+        MainPagerAdapter mainPagerAdapter = new MainPagerAdapter(getSupportFragmentManager(),
+            FragmentPagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT,
+            Arrays.asList(priceErrorListFragment, searchLogListFragment, priceErrorDeletedListFragment));
+
         binding.viewPager.setAdapter(mainPagerAdapter);
 
         updateOkSeeButton();
@@ -87,8 +97,17 @@ public class MainActivity extends AppCompatActivity {
         startService(new Intent(this, StorageSaverService.class));
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        priceErrorListFragment.notifyChange();
+        searchLogListFragment.notifyChange();
+        priceErrorDeletedListFragment.notifyChange();
+    }
+
     private void updateOkSeeButton() {
-        if (storage.isPriceError()) {
+        if (storage.getPriceError()) {
             binding.amOkSee.setVisibility(VISIBLE);
         } else {
             binding.amOkSee.setVisibility(GONE);
@@ -98,6 +117,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
         LocalBroadcastManager.getInstance(this).unregisterReceiver(watcherReceiver);
     }
 }

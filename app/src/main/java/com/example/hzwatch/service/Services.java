@@ -4,6 +4,7 @@ public class Services {
     private static Services instance;
 
     private Storage storage = null;
+    private HzwatchService hzwatchService = null;
     private UiService uiService;
 
     private Services() {
@@ -26,6 +27,16 @@ public class Services {
         }
 
         return services.storage;
+    }
+
+    public static HzwatchService getHzwatchService() {
+        Services services = getInstance();
+
+        if (services.hzwatchService == null) {
+            services.hzwatchService = new HzwatchService();
+        }
+
+        return services.hzwatchService;
     }
 
     public static UiService getUiService() {

@@ -36,6 +36,7 @@ public class SearchLogListFragment extends Fragment {
             public void bind(StandardRecyclerItemBinding binding, SearchLog item) {
                 binding.sriName.setText(item.getSearchKey());
                 binding.sriDescription.setText(String.format("Liczba produktów %s / %s", item.getProductsNumber(), uiService.formatReadDateTime(item.getAt())));
+                binding.sriDelete.setVisibility(View.GONE);
             }
 
             @Override
@@ -51,7 +52,9 @@ public class SearchLogListFragment extends Fragment {
     }
 
     public void notifyChange() {
-        recyclerAdapter.setItems(prepareList());
+        if (recyclerAdapter != null) {
+            recyclerAdapter.setItems(prepareList());
+        }
     }
 
     private List<SearchLog> prepareList() {

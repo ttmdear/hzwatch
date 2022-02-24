@@ -3,7 +3,10 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/home/tmp/hzwatch/app/src/main/res/layout/activity_develop.xml" value="0.3188405797101449" />
         <entry key="..\:/home/tmp/hzwatch/app/src/main/res/layout/activity_main.xml" value="0.2796875" />
+        <entry key="..\:/home/tmp/hzwatch/app/src/main/res/layout/fragment_first.xml" value="0.2838541666666667" />
+        <entry key="..\:/home/tmp/hzwatch/app/src/main/res/layout/price_error_deleted_list.xml" value="0.3188405797101449" />
         <entry key="..\:/home/tmp/hzwatch/app/src/main/res/layout/price_error_list.xml" value="0.296875" />
         <entry key="..\:/home/tmp/hzwatch/app/src/main/res/layout/search_log_list.xml" value="0.296875" />
         <entry key="..\:/home/tmp/hzwatch/app/src/main/res/layout/standard_recycler_item.xml" value="0.36666666666666664" />
