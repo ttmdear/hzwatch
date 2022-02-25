@@ -21,7 +21,6 @@ import com.example.hzwatch.service.Storage;
 import com.example.hzwatch.service.UiService;
 import com.example.hzwatch.util.SortUtil;
 
-import java.util.Collections;
 import java.util.List;
 
 public class PriceErrorDeletedListFragment extends Fragment {
@@ -67,7 +66,7 @@ public class PriceErrorDeletedListFragment extends Fragment {
     }
 
     private List<PriceError> prepareList() {
-        List<PriceError> list = storage.findPriceErrorDeleted();
+        List<PriceError> list = storage.findPriceErrorDeletedAll();
         SortUtil.sort(list, (o1, o2) -> o1.getAt().compareTo(o2.getAt()));
 
         return list;

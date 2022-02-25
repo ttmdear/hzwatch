@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class Storage {
@@ -34,23 +33,12 @@ public class Storage {
     private List<PriceError> priceErrorDeletedList;
     private List<SearchLog> searchLogList;
 
-    private boolean isChange = false;
+    private boolean change = false;
     private Context context;
 
     public void clean() {
         initEmptyStorage();
-        save();
-    }
-
-    public void loadTestData() {
-        PriceError priceError = new PriceError();
-        priceError.setId(id());
-        priceError.setProduct("Samsung Galaxy S21 5G Smartphone 128GB Phantom Grey Android 11.0 G991B");
-        priceError.setUrl("http://o2.pl");
-        priceError.setAt(Util.date());
-        priceError.setPrice(2034.23);
-        priceError.setAvr(40.12);
-        priceErrorList.add(priceError);
+        notifyChange();
     }
 
     public void create(PriceError priceError) {
@@ -66,22 +54,30 @@ public class Storage {
     }
 
     public void deletePriceError(Integer priceErrorId) {
-        PriceError priceError = Util.getById(priceErrorList, priceErrorId);
-        priceErrorList = Util.filter(priceErrorList, priceError1 -> !priceError1.getId().equals(priceError.getId()));
-        priceErrorDeletedList.add(priceError);
+        priceErrorDeletedList.add(Util.getById(priceErrorList, priceErrorId));
+        priceErrorList = Util.filter(priceErrorList, priceError1 -> !priceError1.getId().equals(priceErrorId));
         notifyChange();
     }
 
-    public List<PriceError> findPriceErrorDeleted() {
-        return priceErrorDeletedList;
-    }
-
-    public List<PriceError> findPriceError() {
+    public List<PriceError> findPriceErrorAll() {
         return priceErrorList;
     }
 
-    public List<SearchLog> findSearchLog() {
+    public List<PriceError> findPriceErrorDeletedAll() {
+        return priceErrorDeletedList;
+    }
+
+    public List<SearchLog> findSearchLogAll() {
         return searchLogList;
+    }
+
+    public Boolean getPriceError() {
+        return priceError;
+    }
+
+    public void setPriceError(Boolean priceError) {
+        this.priceError = priceError;
+        notifyChange();
     }
 
     public String getSearchKeyList() {
@@ -106,20 +102,10 @@ public class Storage {
     }
 
     public boolean isChange() {
-        return isChange;
-    }
-
-    public Boolean getPriceError() {
-        return priceError;
-    }
-
-    public void setPriceError(Boolean priceError) {
-        this.priceError = priceError;
-        notifyChange();
+        return change;
     }
 
     public void load() {
-        Log.d(TAG, "load: begin");
         FileInputStream fileIn;
 
         try {
@@ -139,23 +125,31 @@ public class Storage {
             return;
         }
 
-        searchKeyList = hzwatchStorage.getSearchKeyList();
-        priceError = hzwatchStorage.getPriceError() != null && hzwatchStorage.getPriceError();
-        priceErrorList = orEmptyList(hzwatchStorage.getPriceErrorList());
-        priceErrorDeletedList = orEmptyList(hzwatchStorage.getPriceErrorDeletedList());
-        searchLogList = orEmptyList(hzwatchStorage.getSearchLogList());
+        searchKeyList = Util.nullIfEmpty(hzwatchStorage.getSearchKeyList());
+        priceError = Util.falseIfNull(hzwatchStorage.getPriceError());
+        priceErrorList = Util.emptyListIfNull(hzwatchStorage.getPriceErrorList());
+        priceErrorDeletedList = Util.emptyListIfNull(hzwatchStorage.getPriceErrorDeletedList());
+        searchLogList = Util.emptyListIfNull(hzwatchStorage.getSearchLogList());
 
         processPostLoad();
-        Log.d(TAG, "load: end");
     }
 
-    private <T> List<T> orEmptyList(List<T> list) {
-        if (list == null) return new ArrayList<>();
-        return list;
+    public void loadTestData() {
+        initEmptyStorage();
+
+        PriceError priceError = new PriceError();
+        priceError.setId(id());
+        priceError.setStorage(this);
+        priceError.setProduct("Samsung Galaxy S21 5G Smartphone 128GB Phantom Grey Android 11.0 G991B");
+        priceError.setUrl("http://o2.pl");
+        priceError.setAt(Util.date());
+        priceError.setPrice(2034.23);
+        priceError.setAvr(40.12);
+        priceErrorList.add(priceError);
     }
 
     public void notifyChange() {
-        isChange = true;
+        change = true;
     }
 
     private void processPostLoad() {
@@ -191,7 +185,7 @@ public class Storage {
             e.printStackTrace();
         }
 
-        isChange = false;
+        change = false;
         Log.d(TAG, "save: end");
     }
 
@@ -209,6 +203,14 @@ public class Storage {
 
         public HzwatchStorage() {
 
+        }
+
+        public Boolean getPriceError() {
+            return priceError;
+        }
+
+        public void setPriceError(Boolean priceError) {
+            this.priceError = priceError;
         }
 
         public List<PriceError> getPriceErrorDeletedList() {
@@ -249,14 +251,6 @@ public class Storage {
 
         public void setVersion(int version) {
             this.version = version;
-        }
-
-        public Boolean getPriceError() {
-            return priceError;
-        }
-
-        public void setPriceError(Boolean priceError) {
-            this.priceError = priceError;
         }
     }
 }

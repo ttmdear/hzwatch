@@ -58,7 +58,7 @@ public class SearchLogListFragment extends Fragment {
     }
 
     private List<SearchLog> prepareList() {
-        List<SearchLog> searchLogList = storage.findSearchLog();
+        List<SearchLog> searchLogList = storage.findSearchLogAll();
         SortUtil.sort(searchLogList, (o1, o2) -> o1.getAt().compareTo(o2.getAt()));
 
         return searchLogList;

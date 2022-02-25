@@ -46,6 +46,18 @@ public class Util {
         return result;
     }
 
+    public static <T extends String> T nullIfEmpty(T str) {
+        return str == null ? null : str.isEmpty() ? null : str;
+    }
+
+    public static <T> List<T> emptyListIfNull(List<T> list) {
+        return list == null ? new ArrayList<>() : list;
+    }
+
+    public static Boolean falseIfNull(Boolean value) {
+        return value != null && value;
+    }
+
     public static <T> T find(List<T> value, Predicate<T> predicate) {
         for (T t : value) {
             if (predicate.test(t)) {

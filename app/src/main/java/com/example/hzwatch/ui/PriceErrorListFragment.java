@@ -70,7 +70,7 @@ public class PriceErrorListFragment extends Fragment {
     }
 
     private List<PriceError> prepareList() {
-        List<PriceError> list = storage.findPriceError();
+        List<PriceError> list = storage.findPriceErrorAll();
         SortUtil.sort(list, (o1, o2) -> o1.getAt().compareTo(o2.getAt()));
 
         return list;

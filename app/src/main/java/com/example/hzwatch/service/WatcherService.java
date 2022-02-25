@@ -30,145 +30,24 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class WatcherService extends Service implements Runnable {
-    private static final String TAG = "WatcherService";
 
     public static final String ACTION_CHANGE = "WatcherService.Action.Change";
+
+    private static final String TAG = "WatcherService";
+    private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Random RANDOM = new Random();
+
+    private final Storage storage = Services.getStorage();
     private MediaPlayer playerAlarm;
     private MediaPlayer playerBeep;
     private Thread thread;
     private boolean stop = false;
 
-    public static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
-    private final Storage storage = Services.getStorage();
-
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        stop = true;
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "onStartCommand: begin");
-        playerAlarm = MediaPlayer.create(this, R.raw.alarm);
-        playerBeep = MediaPlayer.create(this, R.raw.beep_long);
-
-        if (thread == null) {
-            thread = new Thread(this);
-            thread.start();
-        }
-
-        return super.onStartCommand(intent, flags, startId);
-    }
-
-    @Override
-    public void run() {
-        Date lastSearch = Util.date();
-
-        while(true) {
-            if (stop) return;
-
-            while(storage.getPriceError()) {
-                playerBeep.start();
-                Util.sleep(100);
-            }
-
-            if (Util.secondsFrom(lastSearch) > 120) {
-                runSearch();
-                playerBeep.start();
-                lastSearch = Util.date();
-                sendBroadcastActionChange();
-            }
-
-            Util.sleep(500);
-        }
-    }
-
-    private void runSearch() {
-        Log.d(TAG, "runSearch: begin");
-
-        String searchKeyString = storage.getSearchKeyList();
-        Log.d(TAG, "runSearch: searchKeyString " + searchKeyString);
-
-        if (searchKeyString == null || searchKeyString.isEmpty()) {
-            return;
-        }
-
-        String[] searchKeyArray = searchKeyString.split(",");
-
-        for (String searchKey : searchKeyArray) {
-            searchKey = searchKey.trim();
-            Log.d(TAG, "runSearch: searchKey " + searchKey);
-
-            if (searchKey.isEmpty()) continue;
-
-            SearchLog log = new SearchLog();
-            log.setSearchKey(searchKey);
-            log.setId(storage.id());
-            log.setAt(Util.date());
-            log.setProductsNumber(0);
-
-            int page = 0;
-            while(true) {
-                HagglezonResponse response = search(searchKey, ++page);
-                Log.d(TAG, "runSearch: response " + response);
-
-                if (isEmptyResponse(response)) {
-                    break;
-                }
-
-                log.setProductsNumber(log.getProductsNumber() + response.getData().getSearchProducts().getProducts().size());
-
-                processResponse(searchKey, response);
-
-                Util.sleep(5 + RANDOM.nextInt(5));
-            }
-
-            storage.create(log);
-        }
-    }
-
-    private boolean isEmptyResponse(HagglezonResponse response) {
-        return response == null ||
-            response.getData() == null ||
-            response.getData().getSearchProducts() == null ||
-            response.getData().getSearchProducts().getProducts() == null ||
-            response.getData().getSearchProducts().getProducts().isEmpty();
-    }
-
-    private void processResponse(String searchKey, HagglezonResponse response) {
-        Log.d(TAG, "processResponse: for searchKey " + searchKey);
-
-        for (Product product : response.getData().getSearchProducts().getProducts()) {
-            PriceError priceError = checkPriceError(product);
-            if (priceError != null) {
-                processPriceError(priceError);
-            }
-        }
-    }
-
-    private void processPriceError(PriceError priceError) {
-        storage.create(priceError);
-        storage.setPriceError(true);
-        sendBroadcastActionChange();
-    }
-
-    private void sendBroadcastActionChange() {
-        LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(ACTION_CHANGE));
-    }
-
     private PriceError checkPriceError(Product product) {
         if (product.getPrices().size() <= 1) return null;
 
-        boolean saved = Util.find(storage.findPriceError(), o -> o.getProduct().equals(product.getTitle())) != null;
+        boolean saved = Util.find(storage.findPriceErrorAll(), o -> o.getProduct().equals(product.getTitle())) != null;
 
         if (saved) return null;
 
@@ -176,12 +55,12 @@ public class WatcherService extends Service implements Runnable {
 
         if (priceList.size() <= 1) return null;
 
-        for(int i=0; i<priceList.size(); i++) {
+        for (int i = 0; i < priceList.size(); i++) {
             double price = priceList.get(i).getPrice();
             double avr = 0;
             int divider = 0;
 
-            for(int j=0; j<priceList.size(); j++) {
+            for (int j = 0; j < priceList.size(); j++) {
                 if (i == j) continue;
 
                 divider++;
@@ -202,6 +81,118 @@ public class WatcherService extends Service implements Runnable {
         }
 
         return null;
+    }
+
+    private boolean isEmptyResponse(HagglezonResponse response) {
+        return response == null ||
+            response.getData() == null ||
+            response.getData().getSearchProducts() == null ||
+            response.getData().getSearchProducts().getProducts() == null ||
+            response.getData().getSearchProducts().getProducts().isEmpty();
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        stop = true;
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        playerAlarm = MediaPlayer.create(this, R.raw.alarm);
+        playerBeep = MediaPlayer.create(this, R.raw.beep_long);
+
+        if (thread == null) {
+            thread = new Thread(this);
+            thread.start();
+        }
+
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    private void processPriceError(PriceError priceError) {
+        storage.create(priceError);
+        storage.setPriceError(true);
+        sendBroadcastActionChange();
+    }
+
+    private void processResponse(String searchKey, HagglezonResponse response) {
+        for (Product product : response.getData().getSearchProducts().getProducts()) {
+            PriceError priceError = checkPriceError(product);
+            if (priceError != null) {
+                processPriceError(priceError);
+            }
+        }
+    }
+
+    @Override
+    public void run() {
+        Date lastSearch = Util.date();
+        // https://www.vogella.com/tutorials/AndroidTaskScheduling/article.html
+
+        while (true) {
+            if (stop) return;
+
+            while (storage.getPriceError()) {
+                playerBeep.start();
+                Util.sleep(1000);
+            }
+
+            runSearch();
+
+            if (Util.secondsFrom(lastSearch) > 120) {
+                playerBeep.start();
+                lastSearch = Util.date();
+                sendBroadcastActionChange();
+            }
+
+            Util.sleep(500);
+        }
+    }
+
+    private void runSearch() {
+        String searchKeyString = storage.getSearchKeyList();
+
+        if (searchKeyString == null || searchKeyString.isEmpty()) {
+            return;
+        }
+
+        String[] searchKeyArray = searchKeyString.split(",");
+
+        for (String searchKey : searchKeyArray) {
+            searchKey = searchKey.trim();
+
+            if (searchKey.isEmpty()) continue;
+
+            SearchLog log = new SearchLog();
+            log.setSearchKey(searchKey);
+            log.setId(storage.id());
+            log.setAt(Util.date());
+            log.setProductsNumber(0);
+
+            int page = 0;
+            while (true) {
+                HagglezonResponse response = search(searchKey, ++page);
+
+                if (isEmptyResponse(response)) {
+                    break;
+                }
+
+                log.setProductsNumber(log.getProductsNumber() + response.getData().getSearchProducts().getProducts().size());
+
+                processResponse(searchKey, response);
+
+                Util.sleep(5 + RANDOM.nextInt(5));
+            }
+
+            storage.create(log);
+        }
     }
 
     private HagglezonResponse search(String search, int page) {
@@ -229,7 +220,7 @@ public class WatcherService extends Service implements Runnable {
             .post(RequestBody.create(body, JSON))
             .build();
 
-       OkHttpClient client = new OkHttpClient();
+        OkHttpClient client = new OkHttpClient();
 
         try (Response response = client.newCall(request).execute()) {
             return OBJECT_MAPPER.readValue(response.body().string(), HagglezonResponse.class);
@@ -238,5 +229,9 @@ public class WatcherService extends Service implements Runnable {
         }
 
         return null;
+    }
+
+    private void sendBroadcastActionChange() {
+        LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(ACTION_CHANGE));
     }
 }

@@ -40,7 +40,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         storage.setContext(this);
-        storage.load();
+        // storage.load();
+        storage.loadTestData();
 
         priceErrorListFragment = new PriceErrorListFragment();
         searchLogListFragment = new SearchLogListFragment();
@@ -49,9 +50,7 @@ public class MainActivity extends AppCompatActivity {
         watcherReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                priceErrorListFragment.notifyChange();
-                searchLogListFragment.notifyChange();
-                updateOkSeeButton();
+                notifyChange();
             }
         };
 
@@ -74,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
 
         binding.amOkSee.setOnClickListener(v -> {
             storage.setPriceError(false);
-            updateOkSeeButton();
+            notifyChange();
         });
 
         binding.amSearchKeyList.setOnLongClickListener(v -> {
@@ -93,8 +92,15 @@ public class MainActivity extends AppCompatActivity {
 
         updateOkSeeButton();
 
-        startService(new Intent(this, WatcherService.class));
+        // startService(new Intent(this, WatcherService.class));
         startService(new Intent(this, StorageSaverService.class));
+    }
+
+    public void notifyChange() {
+        priceErrorListFragment.notifyChange();
+        searchLogListFragment.notifyChange();
+        priceErrorListFragment.notifyChange();
+        updateOkSeeButton();
     }
 
     @Override
