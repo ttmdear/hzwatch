@@ -43,7 +43,7 @@ public class PriceErrorDeletedListFragment extends Fragment {
             @Override
             public void bind(StandardRecyclerItemBinding binding, PriceError priceError) {
                 binding.sriName.setText(priceError.getProduct());
-                binding.sriDescription.setText(format("Cena %s do śr. %s / %s", priceError.getPrice(), priceError.getAvr(), uiService.formatReadDateTime(priceError.getAt())));
+                binding.sriDescription.setText(format("Cena %s do śr. %s / %s", uiService.formatNumber(priceError.getPrice()), uiService.formatNumber(priceError.getAvr()), uiService.formatReadDateTime(priceError.getAt())));
                 binding.sriDelete.setVisibility(View.GONE);
             }
 
@@ -67,7 +67,7 @@ public class PriceErrorDeletedListFragment extends Fragment {
 
     private List<PriceError> prepareList() {
         List<PriceError> list = storage.findPriceErrorDeletedAll();
-        SortUtil.sort(list, (o1, o2) -> o1.getAt().compareTo(o2.getAt()));
+        SortUtil.sortDesc(list, PriceError::getAt);
 
         return list;
     }

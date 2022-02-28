@@ -40,11 +40,11 @@ public class PriceErrorListFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = PriceErrorListBinding.inflate(inflater, container, false);
 
-        recyclerAdapter = new StandardRecyclerAdapter<>(R.layout.standard_recycler_item, Collections.emptyList(), new StandardRecyclerAdapter.Controller<PriceError, StandardRecyclerItemBinding>() {
+        recyclerAdapter = new StandardRecyclerAdapter<>(R.layout.standard_recycler_item, prepareList(), new StandardRecyclerAdapter.Controller<PriceError, StandardRecyclerItemBinding>() {
             @Override
             public void bind(StandardRecyclerItemBinding binding, PriceError priceError) {
                 binding.sriName.setText(priceError.getProduct());
-                binding.sriDescription.setText(format("Cena %s do śr. %s / %s", priceError.getPrice(), priceError.getAvr(), uiService.formatReadDateTime(priceError.getAt())));
+                binding.sriDescription.setText(format("Cena %s do śr. %s / %s", uiService.formatNumber(priceError.getPrice()), uiService.formatNumber(priceError.getAvr()), uiService.formatReadDateTime(priceError.getAt())));
                 binding.sriDelete.setOnClickListener(v -> {
                     storage.deletePriceError(priceError.getId());
                     notifyChange();
@@ -71,7 +71,7 @@ public class PriceErrorListFragment extends Fragment {
 
     private List<PriceError> prepareList() {
         List<PriceError> list = storage.findPriceErrorAll();
-        SortUtil.sort(list, (o1, o2) -> o1.getAt().compareTo(o2.getAt()));
+        SortUtil.sortDesc(list, PriceError::getAt);
 
         return list;
     }

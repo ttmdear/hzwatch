@@ -1,9 +1,13 @@
 package com.example.hzwatch.util;
 
 import com.example.hzwatch.domain.Entity;
+import com.example.hzwatch.ui.Resolver;
 
+import java.security.Provider;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
+import java.util.function.Function;
 
 public class SortUtil {
     private SortUtil() {
@@ -30,6 +34,46 @@ public class SortUtil {
             wasSwap = false;
             for (int i = 0; i < pointer; i++) {
                 if (comparator.compare(value.get(i), value.get(i + 1)) > 0) {
+                    T tmp = value.get(i);
+                    value.set(i, value.get(i + 1));
+                    value.set(i + 1, tmp);
+                    wasSwap = true;
+                }
+            }
+        }
+    }
+
+    public static <T> void sortDesc(List<T> value, Resolver<T, ? extends Date> provider) {
+        int pointer = value.size() - 1;
+        boolean wasSwap = true;
+
+        while (wasSwap) {
+            wasSwap = false;
+            for (int i = 0; i < pointer; i++) {
+                Date a = provider.resolve(value.get(i));
+                Date b = provider.resolve(value.get(i + 1));
+
+                if (a.compareTo(b) < 0) {
+                    T tmp = value.get(i);
+                    value.set(i, value.get(i + 1));
+                    value.set(i + 1, tmp);
+                    wasSwap = true;
+                }
+            }
+        }
+    }
+
+    public static <T> void sortAsc(List<T> value, Resolver<T, ? extends Date> provider) {
+        int pointer = value.size() - 1;
+        boolean wasSwap = true;
+
+        while (wasSwap) {
+            wasSwap = false;
+            for (int i = 0; i < pointer; i++) {
+                Date a = provider.resolve(value.get(i));
+                Date b = provider.resolve(value.get(i + 1));
+
+                if (a.compareTo(b) > 0) {
                     T tmp = value.get(i);
                     value.set(i, value.get(i + 1));
                     value.set(i + 1, tmp);

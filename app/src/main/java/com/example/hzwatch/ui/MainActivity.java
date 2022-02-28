@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
 
         updateOkSeeButton();
 
-        // startService(new Intent(this, WatcherService.class));
+        startService(new Intent(this, WatcherService.class));
         startService(new Intent(this, StorageSaverService.class));
     }
 

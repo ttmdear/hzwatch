@@ -27,7 +27,7 @@ public class Storage {
 
     private static int SEQ = 0;
 
-    private String searchKeyList;
+    private List<String> searchKeyList;
     private Boolean priceError;
     private List<PriceError> priceErrorList;
     private List<PriceError> priceErrorDeletedList;
@@ -80,11 +80,11 @@ public class Storage {
         notifyChange();
     }
 
-    public String getSearchKeyList() {
+    public List<String> getSearchKeyList() {
         return searchKeyList;
     }
 
-    public void setSearchKeyList(String searchKeyList) {
+    public void setSearchKeyList(List<String> searchKeyList) {
         this.searchKeyList = searchKeyList;
         notifyChange();
     }
@@ -94,7 +94,7 @@ public class Storage {
     }
 
     private void initEmptyStorage() {
-        searchKeyList = null;
+        searchKeyList = new ArrayList<>();
         priceError = false;
         priceErrorList = new ArrayList<>();
         priceErrorDeletedList = new ArrayList<>();
@@ -125,7 +125,7 @@ public class Storage {
             return;
         }
 
-        searchKeyList = Util.nullIfEmpty(hzwatchStorage.getSearchKeyList());
+        searchKeyList = Util.emptyListIfNull(hzwatchStorage.getSearchKeyList());
         priceError = Util.falseIfNull(hzwatchStorage.getPriceError());
         priceErrorList = Util.emptyListIfNull(hzwatchStorage.getPriceErrorList());
         priceErrorDeletedList = Util.emptyListIfNull(hzwatchStorage.getPriceErrorDeletedList());

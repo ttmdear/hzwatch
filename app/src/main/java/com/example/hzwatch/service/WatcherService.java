@@ -31,9 +31,9 @@ import okhttp3.Response;
 
 public class WatcherService extends Service implements Runnable {
 
-    public static final String ACTION_CHANGE = "WatcherService.Action.Change";
-
     private static final String TAG = "WatcherService";
+
+    public static final String ACTION_CHANGE = "WatcherService.Action.Change";
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Random RANDOM = new Random();
@@ -67,7 +67,9 @@ public class WatcherService extends Service implements Runnable {
                 avr += priceList.get(j).getPrice();
             }
 
-            if (price <= (avr / divider) * 0.5) {
+            avr = avr / divider;
+
+            if (price <= avr * 0.5) {
                 PriceError priceError = new PriceError();
                 priceError.setId(storage.id());
                 priceError.setProduct(product.getTitle());
@@ -105,6 +107,8 @@ public class WatcherService extends Service implements Runnable {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(TAG, "onStartCommand: onStartCommand");
+
         playerAlarm = MediaPlayer.create(this, R.raw.alarm);
         playerBeep = MediaPlayer.create(this, R.raw.beep_long);
 
@@ -133,8 +137,10 @@ public class WatcherService extends Service implements Runnable {
 
     @Override
     public void run() {
+        Log.d(TAG, "run: Runnable.run");
         Date lastSearch = Util.date();
-        // https://www.vogella.com/tutorials/AndroidTaskScheduling/article.html
+
+        Util.sleep(5000);
 
         while (true) {
             if (stop) return;
