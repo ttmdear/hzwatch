@@ -4,7 +4,6 @@ import android.app.Service;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.IBinder;
-import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -14,7 +13,6 @@ import com.example.hzwatch.domain.HagglezonResponse;
 import com.example.hzwatch.domain.HagglezonResponse.Price;
 import com.example.hzwatch.domain.HagglezonResponse.Product;
 import com.example.hzwatch.domain.PriceError;
-import com.example.hzwatch.domain.SearchLog;
 import com.example.hzwatch.util.Util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -39,6 +37,7 @@ public class WatcherService extends Service implements Runnable {
     private static final Random RANDOM = new Random();
 
     private final Storage storage = Services.getStorage();
+    private final HzwatchService hzwatchService = Services.getHzwatchService();
     private MediaPlayer playerAlarm;
     private MediaPlayer playerBeep;
     private Thread thread;
@@ -47,11 +46,11 @@ public class WatcherService extends Service implements Runnable {
     private PriceError checkPriceError(Product product) {
         if (product.getPrices().size() <= 1) return null;
 
-        boolean saved = Util.find(storage.findPriceErrorAll(), o -> o.getProduct().equals(product.getTitle())) != null;
+        boolean saved = Util.find(storage.findPriceErrorAll(), o -> product.getId().equals(o.getHzId())) != null;
 
         if (saved) return null;
 
-        List<Price> priceList = Util.filter(product.getPrices(), price -> price.getPrice() != null);
+        List<Price> priceList = Util.filter(product.getPrices(), price -> price.getPrice() != null && !price.getCountry().equals("se"));
 
         if (priceList.size() <= 1) return null;
 
@@ -72,6 +71,7 @@ public class WatcherService extends Service implements Runnable {
             if (price <= avr * 0.5) {
                 PriceError priceError = new PriceError();
                 priceError.setId(storage.id());
+                priceError.setHzId(product.getId());
                 priceError.setProduct(product.getTitle());
                 priceError.setUrl(priceList.get(i).getUrl());
                 priceError.setAt(Util.date());
@@ -107,8 +107,6 @@ public class WatcherService extends Service implements Runnable {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "onStartCommand: onStartCommand");
-
         playerAlarm = MediaPlayer.create(this, R.raw.alarm);
         playerBeep = MediaPlayer.create(this, R.raw.beep_long);
 
@@ -120,85 +118,62 @@ public class WatcherService extends Service implements Runnable {
         return super.onStartCommand(intent, flags, startId);
     }
 
-    private void processPriceError(PriceError priceError) {
-        storage.create(priceError);
-        storage.setPriceError(true);
-        sendBroadcastActionChange();
-    }
-
-    private void processResponse(String searchKey, HagglezonResponse response) {
+    private void processResponse(HagglezonResponse response) {
         for (Product product : response.getData().getSearchProducts().getProducts()) {
             PriceError priceError = checkPriceError(product);
+
             if (priceError != null) {
-                processPriceError(priceError);
+                hzwatchService.processPriceError(priceError);
+                sendBroadcastActionChange();
+                checkPriceErrorState();
             }
+        }
+    }
+
+    private void checkPriceErrorState() {
+        while (hzwatchService.isPriceError()) {
+            playerBeep.start();
+            Util.sleep(1000);
         }
     }
 
     @Override
     public void run() {
-        Log.d(TAG, "run: Runnable.run");
-        Date lastSearch = Util.date();
-
+        // Delay to wait for UI thread
         Util.sleep(5000);
 
         while (true) {
             if (stop) return;
 
-            while (storage.getPriceError()) {
-                playerBeep.start();
-                Util.sleep(1000);
-            }
+            checkPriceErrorState();
+            processSearch();
 
-            runSearch();
-
-            if (Util.secondsFrom(lastSearch) > 120) {
-                playerBeep.start();
-                lastSearch = Util.date();
-                sendBroadcastActionChange();
-            }
-
-            Util.sleep(500);
+            Util.sleep(1000);
         }
     }
 
-    private void runSearch() {
-        String searchKeyString = storage.getSearchKeyList();
+    private void processSearch() {
+        String searchKey = hzwatchService.getNextSearchKeyToSearch();
 
-        if (searchKeyString == null || searchKeyString.isEmpty()) {
-            return;
-        }
+        if (searchKey == null) return;
 
-        String[] searchKeyArray = searchKeyString.split(",");
+        int productsNumber = 0;
+        int page = 0;
 
-        for (String searchKey : searchKeyArray) {
-            searchKey = searchKey.trim();
+        while (true) {
+            HagglezonResponse response = search(searchKey, ++page);
 
-            if (searchKey.isEmpty()) continue;
-
-            SearchLog log = new SearchLog();
-            log.setSearchKey(searchKey);
-            log.setId(storage.id());
-            log.setAt(Util.date());
-            log.setProductsNumber(0);
-
-            int page = 0;
-            while (true) {
-                HagglezonResponse response = search(searchKey, ++page);
-
-                if (isEmptyResponse(response)) {
-                    break;
-                }
-
-                log.setProductsNumber(log.getProductsNumber() + response.getData().getSearchProducts().getProducts().size());
-
-                processResponse(searchKey, response);
-
-                Util.sleep(5 + RANDOM.nextInt(5));
+            if (isEmptyResponse(response)) {
+                break;
             }
 
-            storage.create(log);
+            productsNumber += response.getData().getSearchProducts().getProducts().size();
+            processResponse(response);
+
+            Util.sleep(5 + RANDOM.nextInt(20));
         }
+
+        hzwatchService.postSearch(searchKey, productsNumber);
     }
 
     private HagglezonResponse search(String search, int page) {

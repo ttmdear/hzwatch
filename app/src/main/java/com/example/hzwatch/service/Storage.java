@@ -195,7 +195,7 @@ public class Storage {
 
     public static class HzwatchStorage {
         private int version;
-        private String searchKeyList;
+        private List<String> searchKeyList;
         private Boolean priceError;
         private List<PriceError> priceErrorList;
         private List<PriceError> priceErrorDeletedList;
@@ -229,11 +229,11 @@ public class Storage {
             this.priceErrorList = priceErrorList;
         }
 
-        public String getSearchKeyList() {
+        public List<String> getSearchKeyList() {
             return searchKeyList;
         }
 
-        public void setSearchKeyList(String searchKeyList) {
+        public void setSearchKeyList(List<String> searchKeyList) {
             this.searchKeyList = searchKeyList;
         }
 

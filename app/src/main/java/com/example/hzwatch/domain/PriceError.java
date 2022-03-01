@@ -4,6 +4,7 @@ import java.util.Date;
 
 public class PriceError extends Entity {
     private String product;
+    private String hzId;
     private String url;
     private Date at;
     private Double price;
@@ -55,5 +56,13 @@ public class PriceError extends Entity {
     public void setAvr(Double avr) {
         this.avr = avr;
         notifyChange();
+    }
+
+    public String getHzId() {
+        return hzId;
+    }
+
+    public void setHzId(String hzId) {
+        this.hzId = hzId;
     }
 }

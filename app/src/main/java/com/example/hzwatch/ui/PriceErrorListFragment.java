@@ -16,6 +16,7 @@ import com.example.hzwatch.R;
 import com.example.hzwatch.databinding.PriceErrorListBinding;
 import com.example.hzwatch.databinding.StandardRecyclerItemBinding;
 import com.example.hzwatch.domain.PriceError;
+import com.example.hzwatch.service.HzwatchService;
 import com.example.hzwatch.service.Services;
 import com.example.hzwatch.service.Storage;
 import com.example.hzwatch.service.UiService;
@@ -27,6 +28,8 @@ import java.util.List;
 public class PriceErrorListFragment extends Fragment {
     private final Storage storage = Services.getStorage();
     private final UiService uiService = Services.getUiService();
+    private final HzwatchService hzwatchService = Services.getHzwatchService();
+
     private PriceErrorListBinding binding;
     private StandardRecyclerAdapter<PriceError, StandardRecyclerItemBinding> recyclerAdapter;
 
@@ -58,7 +61,7 @@ public class PriceErrorListFragment extends Fragment {
 
             @Override
             public boolean onClickAction(PriceError priceError) {
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(priceError.getUrl())));
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(hzwatchService.getHzUrl(priceError.getHzId()))));
                 return false;
             }
         });

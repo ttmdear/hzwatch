@@ -16,17 +16,22 @@ import android.text.Editable;
 import android.text.TextWatcher;
 
 import com.example.hzwatch.databinding.ActivityMainBinding;
+import com.example.hzwatch.service.HzwatchService;
 import com.example.hzwatch.service.Services;
 import com.example.hzwatch.service.Storage;
 import com.example.hzwatch.service.StorageSaverService;
 import com.example.hzwatch.service.WatcherService;
+import com.example.hzwatch.util.Util;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
 
     private Storage storage = Services.getStorage();
+    private HzwatchService hzwatchService = Services.getHzwatchService();
     private BroadcastReceiver watcherReceiver;
     private PriceErrorListFragment priceErrorListFragment;
     private SearchLogListFragment searchLogListFragment;
@@ -40,8 +45,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         storage.setContext(this);
-        // storage.load();
-        storage.loadTestData();
+        storage.load();
 
         priceErrorListFragment = new PriceErrorListFragment();
         searchLogListFragment = new SearchLogListFragment();
@@ -57,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver(watcherReceiver, new IntentFilter(WatcherService.ACTION_CHANGE));
 
         // Init text
-        binding.searchKeyList.setText(storage.getSearchKeyList() == null ? "" : storage.getSearchKeyList());
+        binding.searchKeyList.setText(prepareSearchKeyList());
         binding.searchKeyList.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -67,8 +71,14 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                storage.setSearchKeyList(s.toString());
+                binding.amSave.setVisibility(VISIBLE);
             }
+        });
+
+        binding.amSave.setVisibility(GONE);
+        binding.amSave.setOnClickListener(v -> {
+            onSave(binding.searchKeyList.getText().toString());
+            binding.amSave.setVisibility(GONE);
         });
 
         binding.amOkSee.setOnClickListener(v -> {
@@ -94,6 +104,32 @@ public class MainActivity extends AppCompatActivity {
 
         startService(new Intent(this, WatcherService.class));
         startService(new Intent(this, StorageSaverService.class));
+    }
+
+    public void onSave(String searchKey) {
+        if (searchKey.trim().isEmpty()) {
+            hzwatchService.updateSearchKeyList(new ArrayList<>());
+            return;
+        }
+
+        List<String> searchKeyList = new ArrayList<>();
+
+        searchKey = searchKey.trim();
+        String[] split = searchKey.split(",");
+
+        for (String s : split) {
+            s = s.trim();
+
+            if (!s.isEmpty()) {
+                searchKeyList.add(s);
+            }
+        }
+
+        hzwatchService.updateSearchKeyList(searchKeyList);
+    }
+
+    public String prepareSearchKeyList() {
+        return Util.join(",", hzwatchService.getSearchKeyList());
     }
 
     public void notifyChange() {

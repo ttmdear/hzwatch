@@ -1,5 +1,6 @@
 package com.example.hzwatch.util;
 
+import com.example.hzwatch.BuildConfig;
 import com.example.hzwatch.domain.Entity;
 
 import java.text.ParseException;
@@ -7,6 +8,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 public class Util {
     public static final int SECONDS_IN_DAY = 60 * 60 * 24;
@@ -44,6 +46,26 @@ public class Util {
         }
 
         return result;
+    }
+
+    public static boolean isEmpty(String searchKey) {
+        return searchKey == null || searchKey.isEmpty();
+    }
+
+    public static String join(String delimiter, List<String> searchKeyList) {
+        if (searchKeyList.isEmpty()) return "";
+
+        StringBuilder builder = new StringBuilder();
+
+        for (String s : searchKeyList) {
+            if (builder.length() > 0) {
+                builder.append(delimiter).append(s);
+            } else {
+                builder.append(s);
+            }
+        }
+
+        return builder.toString();
     }
 
     public static <T extends String> T nullIfEmpty(T str) {
