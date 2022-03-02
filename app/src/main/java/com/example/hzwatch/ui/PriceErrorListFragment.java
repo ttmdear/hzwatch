@@ -22,7 +22,6 @@ import com.example.hzwatch.service.Storage;
 import com.example.hzwatch.service.UiService;
 import com.example.hzwatch.util.SortUtil;
 
-import java.util.Collections;
 import java.util.List;
 
 public class PriceErrorListFragment extends Fragment {
@@ -33,10 +32,8 @@ public class PriceErrorListFragment extends Fragment {
     private PriceErrorListBinding binding;
     private StandardRecyclerAdapter<PriceError, StandardRecyclerItemBinding> recyclerAdapter;
 
-    public void notifyChange() {
-        if (recyclerAdapter != null) {
-            recyclerAdapter.setItems(prepareList());
-        }
+    public void updateView() {
+        if (recyclerAdapter != null) recyclerAdapter.setItems(prepareList());
     }
 
     @Override
@@ -49,8 +46,8 @@ public class PriceErrorListFragment extends Fragment {
                 binding.sriName.setText(priceError.getProduct());
                 binding.sriDescription.setText(format("Cena %s do śr. %s / %s", uiService.formatNumber(priceError.getPrice()), uiService.formatNumber(priceError.getAvr()), uiService.formatReadDateTime(priceError.getAt())));
                 binding.sriDelete.setOnClickListener(v -> {
-                    storage.deletePriceError(priceError.getId());
-                    notifyChange();
+                    storage.movePriceError(priceError.getId());
+                    updateView();
                 });
             }
 
@@ -73,9 +70,6 @@ public class PriceErrorListFragment extends Fragment {
     }
 
     private List<PriceError> prepareList() {
-        List<PriceError> list = storage.findPriceErrorAll();
-        SortUtil.sortDesc(list, PriceError::getAt);
-
-        return list;
+        return SortUtil.sortByDateDesc(hzwatchService.getActivePriceError(), PriceError::getAt);
     }
 }

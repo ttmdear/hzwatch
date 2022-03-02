@@ -5,11 +5,11 @@ import java.util.Date;
 public class PriceError extends Entity {
     private String product;
     private String hzId;
-    private String url;
     private Date at;
     private Double price;
     private Double avr;
     private Double priceSum;
+    private Boolean moved;
 
     public PriceError() {
     }
@@ -20,15 +20,6 @@ public class PriceError extends Entity {
 
     public void setProduct(String product) {
         this.product = product;
-        notifyChange();
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
         notifyChange();
     }
 
@@ -73,5 +64,13 @@ public class PriceError extends Entity {
 
     public void setPriceSum(Double priceSum) {
         this.priceSum = priceSum;
+    }
+
+    public Boolean getMoved() {
+        return moved;
+    }
+
+    public void setMoved(Boolean moved) {
+        this.moved = moved;
     }
 }

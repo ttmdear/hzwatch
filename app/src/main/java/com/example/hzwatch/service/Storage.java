@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.example.hzwatch.domain.Entity;
 import com.example.hzwatch.domain.PriceError;
+import com.example.hzwatch.domain.SearchKey;
 import com.example.hzwatch.domain.SearchLog;
 import com.example.hzwatch.ui.MainActivity;
 import com.example.hzwatch.util.Util;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class Storage {
@@ -27,10 +29,9 @@ public class Storage {
 
     private static int SEQ = 0;
 
-    private List<String> searchKeyList;
+    private List<SearchKey> searchKeyList;
     private Boolean priceError;
     private List<PriceError> priceErrorList;
-    private List<PriceError> priceErrorDeletedList;
     private List<SearchLog> searchLogList;
 
     private boolean change = false;
@@ -53,9 +54,19 @@ public class Storage {
         notifyChange();
     }
 
-    public void deletePriceError(Integer priceErrorId) {
-        priceErrorDeletedList.add(Util.getById(priceErrorList, priceErrorId));
-        priceErrorList = Util.filter(priceErrorList, priceError1 -> !priceError1.getId().equals(priceErrorId));
+    public void create(SearchKey searchKey) {
+        searchKey.setStorage(this);
+        searchKeyList.add(searchKey);
+        notifyChange();
+    }
+
+    public void movePriceError(Integer priceErrorId) {
+        PriceError priceError = Util.getById(priceErrorList, priceErrorId);
+        priceError.setMoved(true);
+    }
+
+    public void deleteSearchKey(Integer searchKeyId) {
+        searchKeyList = Util.filter(searchKeyList, searchKey -> !searchKey.getId().equals(searchKeyId));
         notifyChange();
     }
 
@@ -63,8 +74,8 @@ public class Storage {
         return priceErrorList;
     }
 
-    public List<PriceError> findPriceErrorDeletedAll() {
-        return priceErrorDeletedList;
+    public List<SearchKey> findSearchKeyAll() {
+        return searchKeyList;
     }
 
     public List<SearchLog> findSearchLogAll() {
@@ -80,15 +91,6 @@ public class Storage {
         notifyChange();
     }
 
-    public List<String> getSearchKeyList() {
-        return searchKeyList;
-    }
-
-    public void setSearchKeyList(List<String> searchKeyList) {
-        this.searchKeyList = searchKeyList;
-        notifyChange();
-    }
-
     public int id() {
         return ++SEQ;
     }
@@ -97,7 +99,6 @@ public class Storage {
         searchKeyList = new ArrayList<>();
         priceError = false;
         priceErrorList = new ArrayList<>();
-        priceErrorDeletedList = new ArrayList<>();
         searchLogList = new ArrayList<>();
     }
 
@@ -128,7 +129,6 @@ public class Storage {
         searchKeyList = Util.emptyListIfNull(hzwatchStorage.getSearchKeyList());
         priceError = Util.falseIfNull(hzwatchStorage.getPriceError());
         priceErrorList = Util.emptyListIfNull(hzwatchStorage.getPriceErrorList());
-        priceErrorDeletedList = Util.emptyListIfNull(hzwatchStorage.getPriceErrorDeletedList());
         searchLogList = Util.emptyListIfNull(hzwatchStorage.getSearchLogList());
 
         processPostLoad();
@@ -139,9 +139,10 @@ public class Storage {
 
         PriceError priceError = new PriceError();
         priceError.setId(id());
+        priceError.setHzId("HZ-1");
         priceError.setStorage(this);
+        priceError.setMoved(false);
         priceError.setProduct("Samsung Galaxy S21 5G Smartphone 128GB Phantom Grey Android 11.0 G991B");
-        priceError.setUrl("http://o2.pl");
         priceError.setAt(Util.date());
         priceError.setPrice(2034.23);
         priceError.setAvr(40.12);
@@ -154,7 +155,6 @@ public class Storage {
 
     private void processPostLoad() {
         processPostLoad(priceErrorList);
-        processPostLoad(priceErrorDeletedList);
         processPostLoad(searchLogList);
     }
 
@@ -175,7 +175,6 @@ public class Storage {
         hzwatchStorage.setSearchKeyList(searchKeyList);
         hzwatchStorage.setPriceError(priceError);
         hzwatchStorage.setPriceErrorList(priceErrorList);
-        hzwatchStorage.setPriceErrorDeletedList(priceErrorDeletedList);
         hzwatchStorage.setSearchLogList(searchLogList);
 
         try (FileOutputStream fos = context.openFileOutput(FILE_NAME, Context.MODE_PRIVATE)) {
@@ -195,10 +194,9 @@ public class Storage {
 
     public static class HzwatchStorage {
         private int version;
-        private List<String> searchKeyList;
+        private List<SearchKey> searchKeyList;
         private Boolean priceError;
         private List<PriceError> priceErrorList;
-        private List<PriceError> priceErrorDeletedList;
         private List<SearchLog> searchLogList;
 
         public HzwatchStorage() {
@@ -213,14 +211,6 @@ public class Storage {
             this.priceError = priceError;
         }
 
-        public List<PriceError> getPriceErrorDeletedList() {
-            return priceErrorDeletedList;
-        }
-
-        public void setPriceErrorDeletedList(List<PriceError> priceErrorDeletedList) {
-            this.priceErrorDeletedList = priceErrorDeletedList;
-        }
-
         public List<PriceError> getPriceErrorList() {
             return priceErrorList;
         }
@@ -229,11 +219,11 @@ public class Storage {
             this.priceErrorList = priceErrorList;
         }
 
-        public List<String> getSearchKeyList() {
+        public List<SearchKey> getSearchKeyList() {
             return searchKeyList;
         }
 
-        public void setSearchKeyList(List<String> searchKeyList) {
+        public void setSearchKeyList(List<SearchKey> searchKeyList) {
             this.searchKeyList = searchKeyList;
         }
 

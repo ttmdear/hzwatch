@@ -43,7 +43,7 @@ public class SortUtil {
         }
     }
 
-    public static <T> void sortDesc(List<T> value, Resolver<T, ? extends Date> provider) {
+    public static <T> List<T> sortByDateDesc(List<T> value, Resolver<T, ? extends Date> provider) {
         int pointer = value.size() - 1;
         boolean wasSwap = true;
 
@@ -61,9 +61,11 @@ public class SortUtil {
                 }
             }
         }
+
+        return value;
     }
 
-    public static <T> void sortAsc(List<T> value, Resolver<T, ? extends Date> provider) {
+    public static <T> List<T> sortByDateAsc(List<T> value, Resolver<T, ? extends Date> provider) {
         int pointer = value.size() - 1;
         boolean wasSwap = true;
 
@@ -81,5 +83,29 @@ public class SortUtil {
                 }
             }
         }
+
+        return value;
+    }
+
+    public static <T> List<T> sortByStringAsc(List<T> value, Resolver<T, ? extends String> provider) {
+        int pointer = value.size() - 1;
+        boolean wasSwap = true;
+
+        while (wasSwap) {
+            wasSwap = false;
+            for (int i = 0; i < pointer; i++) {
+                String a = provider.resolve(value.get(i));
+                String b = provider.resolve(value.get(i + 1));
+
+                if (a.compareTo(b) > 0) {
+                    T tmp = value.get(i);
+                    value.set(i, value.get(i + 1));
+                    value.set(i + 1, tmp);
+                    wasSwap = true;
+                }
+            }
+        }
+
+        return value;
     }
 }

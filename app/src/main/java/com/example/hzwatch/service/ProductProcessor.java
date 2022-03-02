@@ -5,12 +5,12 @@ import com.example.hzwatch.domain.HagglezonResponse.Product;
 import com.example.hzwatch.domain.PriceError;
 import com.example.hzwatch.util.Util;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class ProductProcessor {
     private final Storage storage = Services.getStorage();
+    private final HzwatchService hzwatchService = Services.getHzwatchService();
 
     private final List<String> PRICE_COUNTRY_TO_OMIT = Collections.singletonList("se");
 
@@ -31,11 +31,9 @@ public class ProductProcessor {
             return false;
         }
 
-        List<PriceError> priceErrorWholeList = new ArrayList<>();
-        priceErrorWholeList.addAll(storage.findPriceErrorAll());
-        priceErrorWholeList.addAll(storage.findPriceErrorDeletedAll());
+        List<PriceError> priceErrorList = hzwatchService.getAllPriceError();
 
-        PriceError priceError = Util.find(priceErrorWholeList, priceError1 -> priceError1.getHzId().equals(product.getId()));
+        PriceError priceError = Util.find(priceErrorList, priceError1 -> priceError1.getHzId().equals(product.getId()));
 
         if (priceError == null) {
             return true;
@@ -70,21 +68,34 @@ public class ProductProcessor {
             avr = avr / divider;
 
             if (price <= avr * 0.5) {
-                PriceError priceError = new PriceError();
-                priceError.setId(storage.id());
-                priceError.setHzId(product.getId());
-                priceError.setProduct(product.getTitle());
-                priceError.setPriceSum(calcPriceSum(product));
-                priceError.setUrl(priceList.get(i).getUrl());
-                priceError.setAt(Util.date());
-                priceError.setAvr(avr);
-                priceError.setPrice(price);
+                processPriceError(product, price, avr);
 
                 return new ProcessProductResult(true);
             }
         }
 
         return new ProcessProductResult(false);
+    }
+
+    private void processPriceError(Product product, Double price, Double avr) {
+        PriceError priceError = hzwatchService.getPriceErrorByHzId(product.getId());
+
+        if (priceError == null) {
+            priceError = new PriceError();
+            priceError.setId(storage.id());
+
+            storage.create(priceError);
+        }
+
+        priceError.setHzId(product.getId());
+        priceError.setProduct(product.getTitle());
+        priceError.setPriceSum(calcPriceSum(product));
+        priceError.setAt(Util.date());
+        priceError.setAvr(avr);
+        priceError.setPrice(price);
+        priceError.setMoved(false);
+
+        storage.setPriceError(true);
     }
 
     private void removeUnwantedPrices(Product product) {

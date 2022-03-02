@@ -8,24 +8,18 @@
     tools:context=".ui.MainActivity">
 
     <TextView
-        android:id="@+id/am_search_key_list"
+        android:id="@+id/am_logo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Szukane słowa"
+        android:text="Hzwatch"
+        android:textColor="#E6BE83"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <EditText
-        android:id="@+id/searchKeyList"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:ems="10"
-        android:inputType="textMultiLine"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.842"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/am_search_key_list" />
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabLayout"
@@ -35,7 +29,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/searchKeyList">
+        app:layout_constraintTop_toBottomOf="@+id/am_logo">
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
@@ -72,15 +66,15 @@
         android:layout_height="wrap_content"
         android:text="OK Widzę"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/am_save"
+        app:layout_constraintEnd_toStartOf="@+id/am_products"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
-        android:id="@+id/am_save"
+        android:id="@+id/am_products"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Zapisz"
+        android:text="Produkty"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"

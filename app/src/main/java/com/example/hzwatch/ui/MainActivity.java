@@ -12,8 +12,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
 
 import com.example.hzwatch.databinding.ActivityMainBinding;
 import com.example.hzwatch.service.HzwatchService;
@@ -21,21 +19,20 @@ import com.example.hzwatch.service.Services;
 import com.example.hzwatch.service.Storage;
 import com.example.hzwatch.service.StorageSaverService;
 import com.example.hzwatch.service.WatcherService;
-import com.example.hzwatch.util.Util;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
 
     private Storage storage = Services.getStorage();
     private HzwatchService hzwatchService = Services.getHzwatchService();
+
     private BroadcastReceiver watcherReceiver;
+
     private PriceErrorListFragment priceErrorListFragment;
     private SearchLogListFragment searchLogListFragment;
-    private PriceErrorDeletedListFragment priceErrorDeletedListFragment;
+    private PriceErrorMovedListFragment priceErrorMovedListFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,54 +46,42 @@ public class MainActivity extends AppCompatActivity {
 
         priceErrorListFragment = new PriceErrorListFragment();
         searchLogListFragment = new SearchLogListFragment();
-        priceErrorDeletedListFragment = new PriceErrorDeletedListFragment();
+        priceErrorMovedListFragment = new PriceErrorMovedListFragment();
 
         watcherReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                notifyChange();
+                updateView();
             }
         };
 
         LocalBroadcastManager.getInstance(this).registerReceiver(watcherReceiver, new IntentFilter(WatcherService.ACTION_CHANGE));
 
-        // Init text
-        binding.searchKeyList.setText(prepareSearchKeyList());
-        binding.searchKeyList.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                binding.amSave.setVisibility(VISIBLE);
-            }
-        });
-
-        binding.amSave.setVisibility(GONE);
-        binding.amSave.setOnClickListener(v -> {
-            onSave(binding.searchKeyList.getText().toString());
-            binding.amSave.setVisibility(GONE);
-        });
-
         binding.amOkSee.setOnClickListener(v -> {
             storage.setPriceError(false);
-            notifyChange();
+            updateView();
         });
 
-        binding.amSearchKeyList.setOnLongClickListener(v -> {
+        binding.amProducts.setOnClickListener(v -> {
+            startActivity(new Intent(this, SearchKeyListActivity.class));
+        });
+
+        binding.amLogo.setOnLongClickListener(v -> {
             startActivity(new Intent(this, DevelopActivity.class));
             return false;
         });
+
+        // binding.amSearchKeyList.setOnLongClickListener(v -> {
+        //     startActivity(new Intent(this, DevelopActivity.class));
+        //     return false;
+        // });
 
         // Init tabs
         binding.tabLayout.setupWithViewPager(binding.viewPager);
 
         MainPagerAdapter mainPagerAdapter = new MainPagerAdapter(getSupportFragmentManager(),
             FragmentPagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT,
-            Arrays.asList(priceErrorListFragment, searchLogListFragment, priceErrorDeletedListFragment));
+            Arrays.asList(priceErrorListFragment, searchLogListFragment, priceErrorMovedListFragment));
 
         binding.viewPager.setAdapter(mainPagerAdapter);
 
@@ -106,36 +91,18 @@ public class MainActivity extends AppCompatActivity {
         startService(new Intent(this, StorageSaverService.class));
     }
 
-    public void onSave(String searchKey) {
-        if (searchKey.trim().isEmpty()) {
-            hzwatchService.updateSearchKeyList(new ArrayList<>());
-            return;
-        }
+    @Override
+    protected void onStart() {
+        super.onStart();
 
-        List<String> searchKeyList = new ArrayList<>();
-
-        searchKey = searchKey.trim();
-        String[] split = searchKey.split(",");
-
-        for (String s : split) {
-            s = s.trim();
-
-            if (!s.isEmpty()) {
-                searchKeyList.add(s);
-            }
-        }
-
-        hzwatchService.updateSearchKeyList(searchKeyList);
+        updateView();
     }
 
-    public String prepareSearchKeyList() {
-        return Util.join(",", hzwatchService.getSearchKeyList());
-    }
+    public void updateView() {
+        priceErrorListFragment.updateView();
+        searchLogListFragment.updateView();
+        priceErrorMovedListFragment.updateView();
 
-    public void notifyChange() {
-        priceErrorListFragment.notifyChange();
-        searchLogListFragment.notifyChange();
-        priceErrorListFragment.notifyChange();
         updateOkSeeButton();
     }
 
@@ -143,9 +110,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-        priceErrorListFragment.notifyChange();
-        searchLogListFragment.notifyChange();
-        priceErrorDeletedListFragment.notifyChange();
+        priceErrorListFragment.updateView();
+        searchLogListFragment.updateView();
+        priceErrorMovedListFragment.updateView();
     }
 
     private void updateOkSeeButton() {

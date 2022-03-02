@@ -13,7 +13,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.hzwatch.R;
-import com.example.hzwatch.databinding.PriceErrorDeletedListBinding;
+import com.example.hzwatch.databinding.PriceErrorMovedListBinding;
 import com.example.hzwatch.databinding.StandardRecyclerItemBinding;
 import com.example.hzwatch.domain.PriceError;
 import com.example.hzwatch.service.HzwatchService;
@@ -24,23 +24,21 @@ import com.example.hzwatch.util.SortUtil;
 
 import java.util.List;
 
-public class PriceErrorDeletedListFragment extends Fragment {
+public class PriceErrorMovedListFragment extends Fragment {
     private final Storage storage = Services.getStorage();
     private final UiService uiService = Services.getUiService();
     private final HzwatchService hzwatchService = Services.getHzwatchService();
 
-    private PriceErrorDeletedListBinding binding;
+    private PriceErrorMovedListBinding binding;
     private StandardRecyclerAdapter<PriceError, StandardRecyclerItemBinding> recyclerAdapter;
 
-    public void notifyChange() {
-        if (recyclerAdapter != null) {
-            recyclerAdapter.setItems(prepareList());
-        }
+    public void updateView() {
+        if (recyclerAdapter != null) recyclerAdapter.setItems(prepareList());
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        binding = PriceErrorDeletedListBinding.inflate(inflater, container, false);
+        binding = PriceErrorMovedListBinding.inflate(inflater, container, false);
 
         recyclerAdapter = new StandardRecyclerAdapter<>(R.layout.standard_recycler_item, prepareList(), new StandardRecyclerAdapter.Controller<PriceError, StandardRecyclerItemBinding>() {
             @Override
@@ -69,9 +67,6 @@ public class PriceErrorDeletedListFragment extends Fragment {
     }
 
     private List<PriceError> prepareList() {
-        List<PriceError> list = storage.findPriceErrorDeletedAll();
-        SortUtil.sortDesc(list, PriceError::getAt);
-
-        return list;
+        return SortUtil.sortByDateDesc(hzwatchService.getMovedPriceError(), PriceError::getAt);
     }
 }

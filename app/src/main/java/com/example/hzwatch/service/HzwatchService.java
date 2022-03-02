@@ -1,35 +1,53 @@
 package com.example.hzwatch.service;
 
-import com.example.hzwatch.domain.HagglezonResponse;
-import com.example.hzwatch.domain.HagglezonResponse.Product;
 import com.example.hzwatch.domain.PriceError;
+import com.example.hzwatch.domain.SearchKey;
 import com.example.hzwatch.domain.SearchLog;
 import com.example.hzwatch.util.SortUtil;
 import com.example.hzwatch.util.Util;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 public class HzwatchService {
     private final Storage storage = Services.getStorage();
 
+    public void createSearchKey(String searchKeyValue) {
+        SearchKey searchKey = new SearchKey();
+        searchKey.setId(storage.id());
+        searchKey.setValue(searchKeyValue);
+
+        storage.create(searchKey);
+    }
+
+    public void deleteSearchKey(Integer searchKeyId) {
+        storage.deleteSearchKey(searchKeyId);
+    }
+
+    public boolean existsSearchKey(String searchKeyString) {
+        return Util.<SearchKey>find(storage.findSearchKeyAll(), searchKey -> searchKey.getValue().equals(searchKeyString)) != null;
+    }
+
+    public List<PriceError> getAllPriceError() {
+        return storage.findPriceErrorAll();
+    }
+
     public String getNextSearchKeyToSearch() {
         List<SearchLog> searchLogList = storage.findSearchLogAll();
-        List<String> searchKeyList = storage.getSearchKeyList();
+        List<SearchKey> searchKeyList = storage.findSearchKeyAll();
 
-        for (String searchKey : searchKeyList) {
+        for (SearchKey searchKey : searchKeyList) {
             boolean found = false;
 
             for (SearchLog searchLog : searchLogList) {
-                if (searchLog.getSearchKey().equals(searchKey)) {
+                if (searchLog.getSearchKey().equals(searchKey.getValue())) {
                     found = true;
                     break;
                 }
             }
 
             if (!found) {
-                return searchKey;
+                return searchKey.getValue();
             }
         }
 
@@ -37,23 +55,33 @@ public class HzwatchService {
             return null;
         }
 
-        SortUtil.sortAsc(searchLogList, SearchLog::getNextSearchAt);
+        SortUtil.sortByDateAsc(searchLogList, SearchLog::getNextSearchAt);
 
         Date date = Util.date();
 
         for (SearchLog searchLog : searchLogList) {
-            if (date.after(searchLog.getNextSearchAt())) {
-                return searchLog.getSearchKey();
+            if (!date.after(searchLog.getNextSearchAt())) {
+                continue;
+            }
+
+            SearchKey searchKey = Util.find(searchKeyList, searchKey1 -> searchKey1.getValue().equals(searchLog.getSearchKey()));
+
+            if (searchKey != null) {
+                return searchKey.getValue();
             }
         }
 
         return null;
     }
 
-
-    public List<String> getSearchKeyList() {
-        return storage.getSearchKeyList();
+    public PriceError getPriceErrorByHzId(String hzId) {
+        return Util.find(storage.findPriceErrorAll(), priceError1 -> priceError1.getHzId().equals(hzId));
     }
+
+    public List<SearchKey> getSearchKeyAll() {
+        return storage.findSearchKeyAll();
+    }
+
 
     public boolean isPriceError() {
         return storage.getPriceError();
@@ -79,13 +107,12 @@ public class HzwatchService {
         }
     }
 
-    public void processPriceError(PriceError priceError) {
-        storage.create(priceError);
-        storage.setPriceError(true);
+    public List<PriceError> getActivePriceError() {
+        return Util.filter(storage.findPriceErrorAll(), priceError -> !priceError.getMoved());
     }
 
-    public void updateSearchKeyList(List<String> searchKeyList) {
-        storage.setSearchKeyList(searchKeyList);
+    public List<PriceError> getMovedPriceError() {
+        return Util.filter(storage.findPriceErrorAll(), PriceError::getMoved);
     }
 
     public String getHzUrl(String hzId) {

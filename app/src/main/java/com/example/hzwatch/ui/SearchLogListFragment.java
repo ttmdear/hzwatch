@@ -51,15 +51,13 @@ public class SearchLogListFragment extends Fragment {
         return binding.getRoot();
     }
 
-    public void notifyChange() {
-        if (recyclerAdapter != null) {
-            recyclerAdapter.setItems(prepareList());
-        }
+    public void updateView() {
+        if (recyclerAdapter != null) recyclerAdapter.setItems(prepareList());
     }
 
     private List<SearchLog> prepareList() {
         List<SearchLog> searchLogList = storage.findSearchLogAll();
-        SortUtil.sortDesc(searchLogList, SearchLog::getAt);
+        SortUtil.sortByDateDesc(searchLogList, SearchLog::getAt);
 
         return searchLogList;
     }

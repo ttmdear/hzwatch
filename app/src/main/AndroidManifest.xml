@@ -12,6 +12,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Hzwatch">
         <activity
+            android:name=".ui.SearchKeyListActivity"
+            android:exported="false"
+            android:label="@string/title_activity_search_key_list"
+            android:theme="@style/Theme.Hzwatch.NoActionBar" />
+        <activity
             android:name=".ui.DevelopActivity"
             android:exported="false"
             android:label="@string/title_activity_develop"
