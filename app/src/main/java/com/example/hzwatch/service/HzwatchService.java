@@ -1,10 +1,13 @@
 package com.example.hzwatch.service;
 
+import com.example.hzwatch.domain.HagglezonResponse;
+import com.example.hzwatch.domain.HagglezonResponse.Product;
 import com.example.hzwatch.domain.PriceError;
 import com.example.hzwatch.domain.SearchLog;
 import com.example.hzwatch.util.SortUtil;
 import com.example.hzwatch.util.Util;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -46,6 +49,7 @@ public class HzwatchService {
 
         return null;
     }
+
 
     public List<String> getSearchKeyList() {
         return storage.getSearchKeyList();

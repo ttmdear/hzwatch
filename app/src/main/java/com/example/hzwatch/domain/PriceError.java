@@ -9,6 +9,7 @@ public class PriceError extends Entity {
     private Date at;
     private Double price;
     private Double avr;
+    private Double priceSum;
 
     public PriceError() {
     }
@@ -64,5 +65,13 @@ public class PriceError extends Entity {
 
     public void setHzId(String hzId) {
         this.hzId = hzId;
+    }
+
+    public Double getPriceSum() {
+        return priceSum;
+    }
+
+    public void setPriceSum(Double priceSum) {
+        this.priceSum = priceSum;
     }
 }

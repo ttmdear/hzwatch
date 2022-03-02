@@ -10,15 +10,12 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.hzwatch.R;
 import com.example.hzwatch.domain.HagglezonResponse;
-import com.example.hzwatch.domain.HagglezonResponse.Price;
 import com.example.hzwatch.domain.HagglezonResponse.Product;
-import com.example.hzwatch.domain.PriceError;
+import com.example.hzwatch.service.ProductProcessor.ProcessProductResult;
 import com.example.hzwatch.util.Util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
-import java.util.Date;
-import java.util.List;
 import java.util.Random;
 
 import okhttp3.MediaType;
@@ -29,60 +26,25 @@ import okhttp3.Response;
 
 public class WatcherService extends Service implements Runnable {
 
-    private static final String TAG = "WatcherService";
-
     public static final String ACTION_CHANGE = "WatcherService.Action.Change";
+    private static final String TAG = "WatcherService";
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Random RANDOM = new Random();
 
     private final Storage storage = Services.getStorage();
     private final HzwatchService hzwatchService = Services.getHzwatchService();
+    private final ProductProcessor productProcessor = Services.getProductProcessor();
     private MediaPlayer playerAlarm;
     private MediaPlayer playerBeep;
     private Thread thread;
     private boolean stop = false;
 
-    private PriceError checkPriceError(Product product) {
-        if (product.getPrices().size() <= 1) return null;
-
-        boolean saved = Util.find(storage.findPriceErrorAll(), o -> product.getId().equals(o.getHzId())) != null;
-
-        if (saved) return null;
-
-        List<Price> priceList = Util.filter(product.getPrices(), price -> price.getPrice() != null && !price.getCountry().equals("se"));
-
-        if (priceList.size() <= 1) return null;
-
-        for (int i = 0; i < priceList.size(); i++) {
-            double price = priceList.get(i).getPrice();
-            double avr = 0;
-            int divider = 0;
-
-            for (int j = 0; j < priceList.size(); j++) {
-                if (i == j) continue;
-
-                divider++;
-                avr += priceList.get(j).getPrice();
-            }
-
-            avr = avr / divider;
-
-            if (price <= avr * 0.5) {
-                PriceError priceError = new PriceError();
-                priceError.setId(storage.id());
-                priceError.setHzId(product.getId());
-                priceError.setProduct(product.getTitle());
-                priceError.setUrl(priceList.get(i).getUrl());
-                priceError.setAt(Util.date());
-                priceError.setPrice(price);
-                priceError.setAvr(avr);
-
-                return priceError;
-            }
+    private void checkPriceErrorState() {
+        while (hzwatchService.isPriceError()) {
+            playerBeep.start();
+            Util.sleep(1000);
         }
-
-        return null;
     }
 
     private boolean isEmptyResponse(HagglezonResponse response) {
@@ -120,35 +82,12 @@ public class WatcherService extends Service implements Runnable {
 
     private void processResponse(HagglezonResponse response) {
         for (Product product : response.getData().getSearchProducts().getProducts()) {
-            PriceError priceError = checkPriceError(product);
+            ProcessProductResult result = productProcessor.process(product);
 
-            if (priceError != null) {
-                hzwatchService.processPriceError(priceError);
+            if (result.isPriceError()) {
                 sendBroadcastActionChange();
                 checkPriceErrorState();
             }
-        }
-    }
-
-    private void checkPriceErrorState() {
-        while (hzwatchService.isPriceError()) {
-            playerBeep.start();
-            Util.sleep(1000);
-        }
-    }
-
-    @Override
-    public void run() {
-        // Delay to wait for UI thread
-        Util.sleep(5000);
-
-        while (true) {
-            if (stop) return;
-
-            checkPriceErrorState();
-            processSearch();
-
-            Util.sleep(1000);
         }
     }
 
@@ -174,6 +113,21 @@ public class WatcherService extends Service implements Runnable {
         }
 
         hzwatchService.postSearch(searchKey, productsNumber);
+    }
+
+    @Override
+    public void run() {
+        // Delay to wait for UI thread
+        Util.sleep(5000);
+
+        while (true) {
+            if (stop) return;
+
+            checkPriceErrorState();
+            processSearch();
+
+            Util.sleep(1000);
+        }
     }
 
     private HagglezonResponse search(String search, int page) {

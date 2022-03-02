@@ -5,7 +5,8 @@ public class Services {
 
     private Storage storage = null;
     private HzwatchService hzwatchService = null;
-    private UiService uiService;
+    private UiService uiService = null;
+    private ProductProcessor productProcessor = null;
 
     private Services() {
 
@@ -27,6 +28,16 @@ public class Services {
         }
 
         return services.storage;
+    }
+
+    public static ProductProcessor getProductProcessor() {
+        Services services = getInstance();
+
+        if (services.productProcessor == null) {
+            services.productProcessor = new ProductProcessor();
+        }
+
+        return services.productProcessor;
     }
 
     public static HzwatchService getHzwatchService() {
