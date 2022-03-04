@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.hzwatch.R;
 import com.example.hzwatch.databinding.ActivitySearchKeyListBinding;
-import com.example.hzwatch.databinding.StandardRecyclerItemBinding;
+import com.example.hzwatch.databinding.StandardRecyclerNarrowItemBinding;
 import com.example.hzwatch.domain.SearchKey;
 import com.example.hzwatch.service.HzwatchService;
 import com.example.hzwatch.service.Services;
@@ -21,7 +21,7 @@ public class SearchKeyListActivity extends AppCompatActivity {
     private final HzwatchService hzwatchService = Services.getHzwatchService();
 
     private ActivitySearchKeyListBinding binding;
-    private StandardRecyclerAdapter<SearchKey, StandardRecyclerItemBinding> recyclerAdapter;
+    private StandardRecyclerAdapter<SearchKey, StandardRecyclerNarrowItemBinding> recyclerAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,9 +30,9 @@ public class SearchKeyListActivity extends AppCompatActivity {
         binding = ActivitySearchKeyListBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        recyclerAdapter = new StandardRecyclerAdapter<>(R.layout.standard_recycler_item, Collections.emptyList(), new StandardRecyclerAdapter.Controller<SearchKey, StandardRecyclerItemBinding>() {
+        recyclerAdapter = new StandardRecyclerAdapter<>(R.layout.standard_recycler_narrow_item, Collections.emptyList(), new StandardRecyclerAdapter.Controller<SearchKey, StandardRecyclerNarrowItemBinding>() {
             @Override
-            public void bind(StandardRecyclerItemBinding binding, SearchKey searchKey) {
+            public void bind(StandardRecyclerNarrowItemBinding binding, SearchKey searchKey) {
                 binding.sriName.setText(searchKey.getValue());
                 binding.sriDescription.setVisibility(View.GONE);
                 binding.sriDelete.setOnClickListener(v -> {
@@ -41,8 +41,8 @@ public class SearchKeyListActivity extends AppCompatActivity {
             }
 
             @Override
-            public StandardRecyclerItemBinding create(View item) {
-                return StandardRecyclerItemBinding.bind(item);
+            public StandardRecyclerNarrowItemBinding create(View item) {
+                return StandardRecyclerNarrowItemBinding.bind(item);
             }
         });
 

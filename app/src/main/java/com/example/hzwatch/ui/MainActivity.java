@@ -5,30 +5,31 @@ import static android.view.View.VISIBLE;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentPagerAdapter;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.example.hzwatch.databinding.ActivityMainBinding;
-import com.example.hzwatch.service.HzwatchService;
 import com.example.hzwatch.service.Services;
 import com.example.hzwatch.service.Storage;
 import com.example.hzwatch.service.StorageSaverService;
-import com.example.hzwatch.service.WatcherService;
+import com.example.hzwatch.worker.WatcherWorker;
 
 import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity {
+    private static final String TAG = "MainActivity";
+
     private ActivityMainBinding binding;
 
-    private Storage storage = Services.getStorage();
-    private HzwatchService hzwatchService = Services.getHzwatchService();
+    private final Storage storage = Services.getStorage();
 
-    private BroadcastReceiver watcherReceiver;
+    private ActionChangeReceiver actionChangeReceiver;
+    private ActionStatusChangeReceiver actionStatusChangeReceiver;
 
     private PriceErrorListFragment priceErrorListFragment;
     private SearchLogListFragment searchLogListFragment;
@@ -48,15 +49,6 @@ public class MainActivity extends AppCompatActivity {
         searchLogListFragment = new SearchLogListFragment();
         priceErrorMovedListFragment = new PriceErrorMovedListFragment();
 
-        watcherReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                updateView();
-            }
-        };
-
-        LocalBroadcastManager.getInstance(this).registerReceiver(watcherReceiver, new IntentFilter(WatcherService.ACTION_CHANGE));
-
         binding.amOkSee.setOnClickListener(v -> {
             storage.setPriceError(false);
             updateView();
@@ -71,11 +63,6 @@ public class MainActivity extends AppCompatActivity {
             return false;
         });
 
-        // binding.amSearchKeyList.setOnLongClickListener(v -> {
-        //     startActivity(new Intent(this, DevelopActivity.class));
-        //     return false;
-        // });
-
         // Init tabs
         binding.tabLayout.setupWithViewPager(binding.viewPager);
 
@@ -87,14 +74,17 @@ public class MainActivity extends AppCompatActivity {
 
         updateOkSeeButton();
 
-        startService(new Intent(this, WatcherService.class));
-        startService(new Intent(this, StorageSaverService.class));
+        WatcherWorker.planWork(this);
+
+        this.registerReceiver(actionChangeReceiver = this.new ActionChangeReceiver(), new IntentFilter(WatcherWorker.ACTION_CHANGE));
+        this.registerReceiver(actionStatusChangeReceiver = this.new ActionStatusChangeReceiver(), new IntentFilter(WatcherWorker.ACTION_STATE_CHANGE));
     }
 
     @Override
     protected void onStart() {
         super.onStart();
 
+        Log.d(TAG, "onStart");
         updateView();
     }
 
@@ -113,6 +103,8 @@ public class MainActivity extends AppCompatActivity {
         priceErrorListFragment.updateView();
         searchLogListFragment.updateView();
         priceErrorMovedListFragment.updateView();
+
+        Log.d(TAG, "onResume");
     }
 
     private void updateOkSeeButton() {
@@ -127,6 +119,33 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
 
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(watcherReceiver);
+        // LocalBroadcastManager.getInstance(this).unregisterReceiver(watcherReceiver);
+        unregisterReceiver(actionChangeReceiver);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(TAG, "onPause");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.d(TAG, "onStop");
+    }
+
+    private class ActionChangeReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            updateView();
+        }
+    }
+
+    private class ActionStatusChangeReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            binding.acStateMsg.setText(intent.getStringExtra("msg"));
+        }
     }
 }

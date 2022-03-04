@@ -20,12 +20,12 @@ public class SearchLog extends Entity {
         notifyChange();
     }
 
-    public String getSearchKey() {
-        return searchKey;
+    public Date getNextSearchAt() {
+        return nextSearchAt;
     }
 
-    public void setSearchKey(String searchKey) {
-        this.searchKey = searchKey;
+    public void setNextSearchAt(Date nextSearchAt) {
+        this.nextSearchAt = nextSearchAt;
         notifyChange();
     }
 
@@ -38,11 +38,12 @@ public class SearchLog extends Entity {
         notifyChange();
     }
 
-    public Date getNextSearchAt() {
-        return nextSearchAt;
+    public String getSearchKey() {
+        return searchKey;
     }
 
-    public void setNextSearchAt(Date nextSearchAt) {
-        this.nextSearchAt = nextSearchAt;
+    public void setSearchKey(String searchKey) {
+        this.searchKey = searchKey;
+        notifyChange();
     }
 }

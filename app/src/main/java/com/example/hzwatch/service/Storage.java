@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 
 import com.example.hzwatch.domain.Entity;
+import com.example.hzwatch.domain.LogEntry;
 import com.example.hzwatch.domain.PriceError;
 import com.example.hzwatch.domain.SearchKey;
 import com.example.hzwatch.domain.SearchLog;
@@ -33,6 +34,7 @@ public class Storage {
     private Boolean priceError;
     private List<PriceError> priceErrorList;
     private List<SearchLog> searchLogList;
+    private List<LogEntry> logEntryList = new ArrayList<>();
 
     private boolean change = false;
     private Context context;
@@ -58,6 +60,17 @@ public class Storage {
         searchKey.setStorage(this);
         searchKeyList.add(searchKey);
         notifyChange();
+    }
+
+    public void create(LogEntry logEntry) {
+        logEntry.setStorage(this);
+        logEntryList.add(logEntry);
+
+        notifyChange();
+    }
+
+    public List<LogEntry> findLogEntryAll() {
+        return logEntryList;
     }
 
     public void movePriceError(Integer priceErrorId) {
@@ -151,6 +164,7 @@ public class Storage {
 
     public void notifyChange() {
         change = true;
+        save();
     }
 
     private void processPostLoad() {

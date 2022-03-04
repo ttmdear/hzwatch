@@ -14,30 +14,12 @@ public class PriceError extends Entity {
     public PriceError() {
     }
 
-    public String getProduct() {
-        return product;
-    }
-
-    public void setProduct(String product) {
-        this.product = product;
-        notifyChange();
-    }
-
     public Date getAt() {
         return at;
     }
 
     public void setAt(Date at) {
         this.at = at;
-        notifyChange();
-    }
-
-    public Double getPrice() {
-        return price;
-    }
-
-    public void setPrice(Double price) {
-        this.price = price;
         notifyChange();
     }
 
@@ -56,14 +38,7 @@ public class PriceError extends Entity {
 
     public void setHzId(String hzId) {
         this.hzId = hzId;
-    }
-
-    public Double getPriceSum() {
-        return priceSum;
-    }
-
-    public void setPriceSum(Double priceSum) {
-        this.priceSum = priceSum;
+        notifyChange();
     }
 
     public Boolean getMoved() {
@@ -72,5 +47,33 @@ public class PriceError extends Entity {
 
     public void setMoved(Boolean moved) {
         this.moved = moved;
+        notifyChange();
+    }
+
+    public Double getPrice() {
+        return price;
+    }
+
+    public void setPrice(Double price) {
+        this.price = price;
+        notifyChange();
+    }
+
+    public Double getPriceSum() {
+        return priceSum;
+    }
+
+    public void setPriceSum(Double priceSum) {
+        this.priceSum = priceSum;
+        notifyChange();
+    }
+
+    public String getProduct() {
+        return product;
+    }
+
+    public void setProduct(String product) {
+        this.product = product;
+        notifyChange();
     }
 }

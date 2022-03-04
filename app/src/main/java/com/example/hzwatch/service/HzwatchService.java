@@ -8,8 +8,11 @@ import com.example.hzwatch.util.Util;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 public class HzwatchService {
+    private static final Random RANDOM = new Random();
+
     private final Storage storage = Services.getStorage();
 
     public void createSearchKey(String searchKeyValue) {
@@ -98,7 +101,7 @@ public class HzwatchService {
         Date date = Util.date();
 
         searchLog.setAt(date);
-        searchLog.setNextSearchAt(Util.datePlusSeconds(date, 60 * 5));
+        searchLog.setNextSearchAt(Util.datePlusSeconds(date, (5 * 60) + RANDOM.nextInt(5 * 60)));
         searchLog.setProductsNumber(productsNumber);
 
         if (searchLog.getId() == null) {

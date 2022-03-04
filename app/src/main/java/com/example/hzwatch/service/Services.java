@@ -6,6 +6,7 @@ public class Services {
     private Storage storage = null;
     private HzwatchService hzwatchService = null;
     private UiService uiService = null;
+    private LoggerService loggerService = null;
     private ProductProcessor productProcessor = null;
 
     private Services() {
@@ -18,6 +19,16 @@ public class Services {
         }
 
         return instance;
+    }
+
+    public static LoggerService getLoggerService() {
+        Services services = getInstance();
+
+        if (services.loggerService == null) {
+            services.loggerService = new LoggerService();
+        }
+
+        return services.loggerService;
     }
 
     public static Storage getStorage() {

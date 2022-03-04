@@ -13,5 +13,6 @@ public class SearchKey extends Entity {
 
     public void setValue(String value) {
         this.value = value;
+        notifyChange();
     }
 }
