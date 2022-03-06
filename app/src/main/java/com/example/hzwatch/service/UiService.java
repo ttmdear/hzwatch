@@ -24,4 +24,8 @@ public class UiService {
 
         return DECIMAL_FORMAT.format(value);
     }
+
+    public String formatString(String searchKey) {
+        return searchKey == null ? "" : searchKey;
+    }
 }

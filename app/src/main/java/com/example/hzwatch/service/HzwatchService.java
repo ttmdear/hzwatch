@@ -121,4 +121,36 @@ public class HzwatchService {
     public String getHzUrl(String hzId) {
         return String.format("https://www.hagglezon.com/en/s/%s", hzId);
     }
+
+    public String getSearchKeyString() {
+        StringBuilder builder = new StringBuilder();
+
+        for (SearchKey searchKey : getSearchKeyAll()) {
+            if (builder.length() > 0) {
+                builder.append(",");
+            }
+
+            builder.append(searchKey.getValue());
+        }
+
+        return builder.toString();
+    }
+
+    public void importSearchKey(String string) {
+        String[] split = string.split(",");
+
+        for (String s : split) {
+            s = s.trim();
+
+            if (s.isEmpty()) continue;
+
+            if (!existsSearchKey(s)) {
+                createSearchKey(s);
+            }
+        }
+    }
+
+    public List<SearchLog> getSearchLogAll() {
+        return storage.findSearchLogAll();
+    }
 }

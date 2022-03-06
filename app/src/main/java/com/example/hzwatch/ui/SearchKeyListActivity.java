@@ -1,5 +1,8 @@
 package com.example.hzwatch.ui;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
 
@@ -56,6 +59,20 @@ public class SearchKeyListActivity extends AppCompatActivity {
                 hzwatchService.createSearchKey(searchKeyString);
                 reloadList();
             }
+        });
+
+        binding.asklCopy.setOnClickListener(v -> {
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            clipboard.setPrimaryClip(ClipData.newPlainText("hz", hzwatchService.getSearchKeyString()));
+        });
+
+        binding.asklPaste.setOnClickListener(v -> {
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData abc = clipboard.getPrimaryClip();
+            ClipData.Item item = abc.getItemAt(0);
+
+            hzwatchService.importSearchKey(item.getText().toString());
+            reloadList();
         });
 
         reloadList();

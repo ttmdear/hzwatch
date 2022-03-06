@@ -44,6 +44,18 @@ public class Storage {
         notifyChange();
     }
 
+    public void cleanLogData() {
+        logEntryList = new ArrayList<>();
+        notifyChange();
+    }
+
+    public void cleanHzData() {
+        priceError = false;
+        priceErrorList = new ArrayList<>();
+        searchLogList = new ArrayList<>();
+        notifyChange();
+    }
+
     public void create(PriceError priceError) {
         priceError.setStorage(this);
         priceErrorList.add(priceError);
@@ -181,7 +193,7 @@ public class Storage {
         }
     }
 
-    public void save() {
+    public synchronized void save() {
         Log.d(TAG, "save: begin");
 
         HzwatchStorage hzwatchStorage = new HzwatchStorage();

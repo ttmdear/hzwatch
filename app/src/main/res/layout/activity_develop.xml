@@ -9,24 +9,24 @@
     tools:context=".ui.DevelopActivity">
 
     <TextView
-        android:id="@+id/textView"
+        android:id="@+id/ad_clean_hz_data"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Clean"
+        android:text="Clean HZ data"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/ad_load_test_data"
+        android:id="@+id/ad_clean_log_data"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Load test data"
+        android:text="Clean log data"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView" />
+        app:layout_constraintTop_toBottomOf="@+id/ad_clean_hz_data" />
 
     <ScrollView
         android:id="@+id/ad_log_list_view"
@@ -47,11 +47,12 @@
 
     <View
         android:id="@+id/divider"
+        android:layout_width="0dp"
         android:layout_height="1dp"
         android:layout_marginTop="8dp"
         android:background="?android:attr/listDivider"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ad_load_test_data" />
+        app:layout_constraintTop_toBottomOf="@+id/ad_clean_log_data" />
 </androidx.constraintlayout.widget.ConstraintLayout>

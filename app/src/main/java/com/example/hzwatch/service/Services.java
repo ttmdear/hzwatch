@@ -1,5 +1,9 @@
 package com.example.hzwatch.service;
 
+import androidx.annotation.NonNull;
+
+import java.lang.Thread.UncaughtExceptionHandler;
+
 public class Services {
     private static Services instance;
 
@@ -8,9 +12,27 @@ public class Services {
     private UiService uiService = null;
     private LoggerService loggerService = null;
     private ProductProcessor productProcessor = null;
+    private final UncaughtExceptionHandler uncaughtExceptionHandler;
 
     private Services() {
+        UncaughtExceptionHandler defaultExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
 
+        uncaughtExceptionHandler = new UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
+                loggerService.log(e.getMessage());
+
+                if (defaultExceptionHandler != null) {
+                    defaultExceptionHandler.uncaughtException(t, e);
+                }
+            }
+        };
+    }
+
+    public void initDefaultUncaughtExceptionHandler() {
+        if (Thread.getDefaultUncaughtExceptionHandler() != uncaughtExceptionHandler) {
+            Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
+        }
     }
 
     public static Services getInstance() {

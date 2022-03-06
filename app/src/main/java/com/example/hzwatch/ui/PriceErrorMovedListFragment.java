@@ -33,7 +33,9 @@ public class PriceErrorMovedListFragment extends Fragment {
     private StandardRecyclerAdapter<PriceError, StandardRecyclerItemBinding> recyclerAdapter;
 
     public void updateView() {
-        if (recyclerAdapter != null) recyclerAdapter.setItems(prepareList());
+        if (recyclerAdapter != null) {
+            recyclerAdapter.setItems(prepareList());
+        }
     }
 
     @Override
@@ -68,5 +70,11 @@ public class PriceErrorMovedListFragment extends Fragment {
 
     private List<PriceError> prepareList() {
         return SortUtil.sortByDateDesc(hzwatchService.getMovedPriceError(), PriceError::getAt);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateView();
     }
 }

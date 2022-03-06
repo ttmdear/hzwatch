@@ -13,6 +13,7 @@ import com.example.hzwatch.R;
 import com.example.hzwatch.databinding.SearchLogListBinding;
 import com.example.hzwatch.databinding.StandardRecyclerItemBinding;
 import com.example.hzwatch.domain.SearchLog;
+import com.example.hzwatch.service.HzwatchService;
 import com.example.hzwatch.service.Services;
 import com.example.hzwatch.service.Storage;
 import com.example.hzwatch.service.UiService;
@@ -23,7 +24,7 @@ import java.util.List;
 
 public class SearchLogListFragment extends Fragment {
     private SearchLogListBinding binding;
-    private final Storage storage = Services.getStorage();
+    private final HzwatchService hzwatchService = Services.getHzwatchService();
     private final UiService uiService = Services.getUiService();
     private StandardRecyclerAdapter<SearchLog, StandardRecyclerItemBinding> recyclerAdapter;
 
@@ -52,14 +53,19 @@ public class SearchLogListFragment extends Fragment {
         return binding.getRoot();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateView();
+    }
+
     public void updateView() {
-        if (recyclerAdapter != null) recyclerAdapter.setItems(prepareList());
+        if (recyclerAdapter != null) {
+            recyclerAdapter.setItems(prepareList());
+        }
     }
 
     private List<SearchLog> prepareList() {
-        List<SearchLog> searchLogList = storage.findSearchLogAll();
-        SortUtil.sortByDateDesc(searchLogList, SearchLog::getAt);
-
-        return searchLogList;
+        return SortUtil.sortByDateDesc(hzwatchService.getSearchLogAll(), SearchLog::getAt);
     }
 }

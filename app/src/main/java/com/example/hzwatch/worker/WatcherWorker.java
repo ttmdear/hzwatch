@@ -3,10 +3,15 @@ package com.example.hzwatch.worker;
 import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
+import android.os.Build;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+import androidx.work.Constraints;
+import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
+import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -34,6 +39,8 @@ public class WatcherWorker extends Worker {
     public static final String ACTION_CHANGE = "WatcherWorker.Action.Change";
     public static final String ACTION_STATE_CHANGE = "WatcherWorker.Action.State.Change";
     private static final String TAG = "WatcherWorker";
+    private static final String WORKER_TAG = "WatcherWorker";
+    private static final String WORKER_PERIODIC_TAG = "WatcherPeriodicWorker";
 
     private final Context context;
 
@@ -58,11 +65,8 @@ public class WatcherWorker extends Worker {
         this.context = context;
     }
 
-    private void checkPriceErrorState() {
-        while (hzwatchService.isPriceError()) {
-            playerBeep.start();
-            Util.sleep(1000);
-        }
+    private void runPriceErrorAlarm() {
+        playerBeep.start();
     }
 
     private boolean isEmptyResponse(HagglezonResponse response) {
@@ -73,22 +77,18 @@ public class WatcherWorker extends Worker {
             response.getData().getSearchProducts().getProducts().isEmpty();
     }
 
-    private void processResponse(HagglezonResponse response) {
+    private void processResponse(String searchKey, HagglezonResponse response) {
         for (HagglezonResponse.Product product : response.getData().getSearchProducts().getProducts()) {
-            ProductProcessor.ProcessProductResult result = productProcessor.process(product);
+            ProductProcessor.ProcessProductResult result = productProcessor.process(searchKey, product);
 
             if (result.isPriceError()) {
                 sendBroadcastActionChange();
-                checkPriceErrorState();
+                runPriceErrorAlarm();
             }
         }
     }
 
-    private void processSearch() {
-        String searchKey = hzwatchService.getNextSearchKeyToSearch();
-
-        if (searchKey == null) return;
-
+    private void processSearch(String searchKey) {
         loggerService.log(String.format("Process search for search key [%s]", searchKey));
 
         int productsNumber = 0;
@@ -100,14 +100,13 @@ public class WatcherWorker extends Worker {
             HagglezonResponse response = search(searchKey, ++page);
 
             if (isEmptyResponse(response)) {
-                sendBroadcastActionStateChange(String.format("Brak produktów dla słowa '%s'.", searchKey));
                 break;
             }
 
             productsNumber += response.getData().getSearchProducts().getProducts().size();
-            processResponse(response);
+            processResponse(searchKey, response);
 
-            Util.sleep(5 + RANDOM.nextInt(20));
+            Util.sleep((5 + RANDOM.nextInt(10)) * 1000);
         }
 
         hzwatchService.postSearch(searchKey, productsNumber);
@@ -168,14 +167,48 @@ public class WatcherWorker extends Worker {
             .setInitialDelay(10, TimeUnit.SECONDS)
             .build();
 
-        WorkManager.getInstance(context).enqueueUniqueWork("test", ExistingWorkPolicy.APPEND, request);
+        WorkManager.getInstance(context).enqueueUniqueWork(WORKER_TAG, ExistingWorkPolicy.APPEND, request);
+
+        Services.getLoggerService().log("Next work planned.");
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public static void planPeriodicWork(Context context) {
+        Constraints constraints = new Constraints.Builder()
+            .setRequiresDeviceIdle(true)
+            .build();
+
+        PeriodicWorkRequest periodicWorkRequest = new PeriodicWorkRequest.Builder(WatcherWorker.class, 15L, TimeUnit.MINUTES)
+            .setConstraints(constraints)
+            .build();
+
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(WORKER_PERIODIC_TAG, ExistingPeriodicWorkPolicy.KEEP, periodicWorkRequest);
+
+        Services.getLoggerService().log("Next periodic work planned.");
     }
 
     @NonNull
     @Override
     public Result doWork() {
-        processSearch();
+        try {
+            doWorkInner();
+        } catch (Exception exception) {
+            loggerService.log(exception.getMessage());
+        }
+
         planWork(context);
         return Result.success();
+    }
+
+    public void doWorkInner() {
+        if (hzwatchService.isPriceError()) {
+            playerBeep.start();
+        }
+
+        String searchKey;
+
+        while((searchKey = hzwatchService.getNextSearchKeyToSearch()) != null) {
+            processSearch(searchKey);
+        }
     }
 }

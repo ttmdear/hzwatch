@@ -25,15 +25,17 @@ import com.example.hzwatch.util.SortUtil;
 import java.util.List;
 
 public class PriceErrorListFragment extends Fragment {
+    private PriceErrorListBinding binding;
+
     private final Storage storage = Services.getStorage();
     private final UiService uiService = Services.getUiService();
     private final HzwatchService hzwatchService = Services.getHzwatchService();
-
-    private PriceErrorListBinding binding;
     private StandardRecyclerAdapter<PriceError, StandardRecyclerItemBinding> recyclerAdapter;
 
     public void updateView() {
-        if (recyclerAdapter != null) recyclerAdapter.setItems(prepareList());
+        if (recyclerAdapter != null) {
+            recyclerAdapter.setItems(prepareList());
+        }
     }
 
     @Override
@@ -44,7 +46,9 @@ public class PriceErrorListFragment extends Fragment {
             @Override
             public void bind(StandardRecyclerItemBinding binding, PriceError priceError) {
                 binding.sriName.setText(priceError.getProduct());
-                binding.sriDescription.setText(format("Cena %s do śr. %s / %s", uiService.formatNumber(priceError.getPrice()), uiService.formatNumber(priceError.getAvr()), uiService.formatReadDateTime(priceError.getAt())));
+                binding.sriDescription.setText(format("Cena %s do śr. %s / %s / %s",
+                    uiService.formatNumber(priceError.getPrice()), uiService.formatNumber(priceError.getAvr()),
+                    uiService.formatReadDateTime(priceError.getAt()), uiService.formatString(priceError.getSearchKey())));
                 binding.sriDelete.setOnClickListener(v -> {
                     storage.movePriceError(priceError.getId());
                     updateView();
@@ -67,6 +71,13 @@ public class PriceErrorListFragment extends Fragment {
         binding.prlList.setLayoutManager(new LinearLayoutManager(getContext()));
 
         return binding.getRoot();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        updateView();
     }
 
     private List<PriceError> prepareList() {

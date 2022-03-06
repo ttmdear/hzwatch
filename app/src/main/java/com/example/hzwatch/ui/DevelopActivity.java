@@ -49,12 +49,13 @@ public class DevelopActivity extends AppCompatActivity {
 
         LocalBroadcastManager.getInstance(this).registerReceiver(watcherReceiver, new IntentFilter(WatcherService.ACTION_CHANGE));
 
-        binding.adClean.setOnClickListener(v -> {
-            storage.clean();
+        binding.adCleanHzData.setOnClickListener(v -> {
+            storage.cleanHzData();
         });
 
-        binding.adLoadTestData.setOnClickListener(v -> {
-            storage.loadTestData();
+        binding.adCleanLogData.setOnClickListener(v -> {
+            storage.cleanLogData();
+            updateView();
         });
 
         recyclerAdapter = new StandardRecyclerAdapter<>(R.layout.standard_recycler_item, prepareList(), new StandardRecyclerAdapter.Controller<LogEntry, StandardRecyclerItemBinding>() {
@@ -82,11 +83,19 @@ public class DevelopActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(watcherReceiver);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateView();
+    }
+
     private List<LogEntry> prepareList() {
         return SortUtil.sortByDateDesc(loggerService.getLogEntryAll(), LogEntry::getAt);
     }
 
     public void updateView() {
-        if (recyclerAdapter != null) recyclerAdapter.setItems(prepareList());
+        if (recyclerAdapter != null) {
+            recyclerAdapter.setItems(prepareList());
+        }
     }
 }

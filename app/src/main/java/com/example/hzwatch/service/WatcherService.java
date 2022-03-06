@@ -15,14 +15,10 @@ import com.example.hzwatch.service.ProductProcessor.ProcessProductResult;
 import com.example.hzwatch.util.Util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Random;
 
@@ -88,9 +84,9 @@ public class WatcherService extends Service implements Runnable {
         return super.onStartCommand(intent, flags, startId);
     }
 
-    private void processResponse(HagglezonResponse response) {
+    private void processResponse(String searchKey, HagglezonResponse response) {
         for (Product product : response.getData().getSearchProducts().getProducts()) {
-            ProcessProductResult result = productProcessor.process(product);
+            ProcessProductResult result = productProcessor.process(searchKey, product);
 
             if (result.isPriceError()) {
                 sendBroadcastActionChange();
@@ -120,7 +116,7 @@ public class WatcherService extends Service implements Runnable {
             }
 
             productsNumber += response.getData().getSearchProducts().getProducts().size();
-            processResponse(response);
+            processResponse(searchKey, response);
 
             Util.sleep(5 + RANDOM.nextInt(20));
         }

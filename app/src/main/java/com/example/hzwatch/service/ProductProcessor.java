@@ -44,7 +44,7 @@ public class ProductProcessor {
         return !productPriceSum.equals(priceError.getPriceSum());
     }
 
-    public ProcessProductResult process(Product product) {
+    public ProcessProductResult process(String searchKey, Product product) {
         removeUnwantedPrices(product);
 
         if (!isProductToProcess(product)) {
@@ -68,7 +68,7 @@ public class ProductProcessor {
             avr = avr / divider;
 
             if (price <= avr * 0.5) {
-                processPriceError(product, price, avr);
+                processPriceError(searchKey, product, price, avr);
 
                 return new ProcessProductResult(true);
             }
@@ -77,7 +77,7 @@ public class ProductProcessor {
         return new ProcessProductResult(false);
     }
 
-    private void processPriceError(Product product, Double price, Double avr) {
+    private void processPriceError(String searchKey, Product product, Double price, Double avr) {
         PriceError priceError = hzwatchService.getPriceErrorByHzId(product.getId());
 
         if (priceError == null) {
@@ -89,6 +89,7 @@ public class ProductProcessor {
 
         priceError.setHzId(product.getId());
         priceError.setProduct(product.getTitle());
+        priceError.setSearchKey(searchKey);
         priceError.setPriceSum(calcPriceSum(product));
         priceError.setAt(Util.date());
         priceError.setAvr(avr);

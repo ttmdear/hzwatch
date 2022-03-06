@@ -3,6 +3,7 @@ package com.example.hzwatch.ui;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentPagerAdapter;
 
@@ -10,6 +11,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -45,6 +47,8 @@ public class MainActivity extends AppCompatActivity {
         storage.setContext(this);
         storage.load();
 
+        Services.getInstance().initDefaultUncaughtExceptionHandler();
+
         priceErrorListFragment = new PriceErrorListFragment();
         searchLogListFragment = new SearchLogListFragment();
         priceErrorMovedListFragment = new PriceErrorMovedListFragment();
@@ -76,16 +80,12 @@ public class MainActivity extends AppCompatActivity {
 
         WatcherWorker.planWork(this);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            WatcherWorker.planPeriodicWork(this);
+        }
+
         this.registerReceiver(actionChangeReceiver = this.new ActionChangeReceiver(), new IntentFilter(WatcherWorker.ACTION_CHANGE));
         this.registerReceiver(actionStatusChangeReceiver = this.new ActionStatusChangeReceiver(), new IntentFilter(WatcherWorker.ACTION_STATE_CHANGE));
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-
-        Log.d(TAG, "onStart");
-        updateView();
     }
 
     public void updateView() {
@@ -99,12 +99,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-
-        priceErrorListFragment.updateView();
-        searchLogListFragment.updateView();
-        priceErrorMovedListFragment.updateView();
-
-        Log.d(TAG, "onResume");
+        updateView();
     }
 
     private void updateOkSeeButton() {
@@ -119,20 +114,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
 
-        // LocalBroadcastManager.getInstance(this).unregisterReceiver(watcherReceiver);
         unregisterReceiver(actionChangeReceiver);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        Log.d(TAG, "onPause");
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        Log.d(TAG, "onStop");
     }
 
     private class ActionChangeReceiver extends BroadcastReceiver {

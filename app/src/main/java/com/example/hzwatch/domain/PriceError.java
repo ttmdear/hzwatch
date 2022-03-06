@@ -10,6 +10,7 @@ public class PriceError extends Entity {
     private Double avr;
     private Double priceSum;
     private Boolean moved;
+    private String searchKey;
 
     public PriceError() {
     }
@@ -74,6 +75,15 @@ public class PriceError extends Entity {
 
     public void setProduct(String product) {
         this.product = product;
+        notifyChange();
+    }
+
+    public String getSearchKey() {
+        return searchKey;
+    }
+
+    public void setSearchKey(String searchKey) {
+        this.searchKey = searchKey;
         notifyChange();
     }
 }

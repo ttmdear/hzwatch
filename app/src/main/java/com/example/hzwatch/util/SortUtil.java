@@ -4,12 +4,15 @@ import com.example.hzwatch.domain.Entity;
 import com.example.hzwatch.ui.Resolver;
 
 import java.security.Provider;
+import java.text.Collator;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.function.Function;
 
 public class SortUtil {
+    private static final Collator COLLATOR = Collator.getInstance();
+
     private SortUtil() {
 
     }
@@ -97,7 +100,8 @@ public class SortUtil {
                 String a = provider.resolve(value.get(i));
                 String b = provider.resolve(value.get(i + 1));
 
-                if (a.compareTo(b) > 0) {
+                // if (a.compareTo(b) > 0) {
+                if (COLLATOR.compare(a, b) > 0) {
                     T tmp = value.get(i);
                     value.set(i, value.get(i + 1));
                     value.set(i + 1, tmp);
