@@ -114,7 +114,7 @@ public class WatcherWorker extends Worker {
         sendBroadcastActionStateChange(String.format("Przeszukałem %s produktów dla słowa %s", productsNumber, searchKey));
         sendBroadcastActionChange();
 
-        playerBeep.start();
+        // playerBeep.start();
     }
 
     private HagglezonResponse search(String search, int page) {
@@ -128,7 +128,7 @@ public class WatcherWorker extends Worker {
             .addHeader("Connection", "keep-alive")
             .addHeader("Content-Length", String.valueOf(body.length()))
             .addHeader("Content-Type", "application/json")
-            .addHeader("Cookie", "_ga=GA1.2.1772071147.1646316036; _gid=GA1.2.692908942.1646316036; __cf_bm=PH80s6kX5nq0ek5.yysxNjLhf2Na_5jJSUf8c2cpKGo-1646317369-0-ATtdPufzytY608+eBOyNrp2XHXzOgdfNjWVhAkt9GtVE10S+EoNYJCNdHRe3p4Vpy0NRlmUW2UJOr+oJbx1B5Cfdwaum0vthN1yGLwAXLk0cHLfgKavUQ/wqtz1WVa3yWA==; _gat=1")
+            .addHeader("Cookie", "_ga=GA1.2.1602304383.1646684304; _gid=GA1.2.1510141826.1646684304; _gat=1; __cf_bm=aBfbOheZHZ92h3XdTx7xFBcYHbUaDCt.9WMir5svTlE-1646684303-0-AZ5UM7JQNgdiLOfBoYBv98Lq0OHW2cJzm1Ot30W+Q60ZXHOQlJS/kutpkkjJgGAoyszy2dnJdmdCJti/F/0RRRD+aAys3rbGZa7vryZtOPZFVoZepdNnBGK3II4Feh5C+g==")
             .addHeader("Host", "graphql.hagglezon.com")
             .addHeader("Origin", "https://www.hagglezon.com")
             .addHeader("Referer", "https://www.hagglezon.com/")
