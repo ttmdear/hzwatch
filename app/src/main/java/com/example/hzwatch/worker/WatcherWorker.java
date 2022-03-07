@@ -113,6 +113,8 @@ public class WatcherWorker extends Worker {
 
         sendBroadcastActionStateChange(String.format("Przeszukałem %s produktów dla słowa %s", productsNumber, searchKey));
         sendBroadcastActionChange();
+
+        playerBeep.start();
     }
 
     private HagglezonResponse search(String search, int page) {
