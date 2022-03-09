@@ -36,7 +36,7 @@ public class WatcherService extends Service implements Runnable {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Random RANDOM = new Random();
 
-    private final LoggerService loggerService = Services.getLoggerService();
+    private final Logger logger = Services.getLogger();
     private final HzwatchService hzwatchService = Services.getHzwatchService();
     private final ProductProcessor productProcessor = Services.getProductProcessor();
     private MediaPlayer playerAlarm;
@@ -100,7 +100,7 @@ public class WatcherService extends Service implements Runnable {
 
         if (searchKey == null) return;
 
-        loggerService.log(String.format("Process search for search key [%s]", searchKey));
+        logger.log(String.format("Process search for search key [%s]", searchKey));
 
         int productsNumber = 0;
         int page = 0;
@@ -183,7 +183,7 @@ public class WatcherService extends Service implements Runnable {
             return "213";
             // return OBJECT_MAPPER.readValue(response.body().string(), HagglezonResponse.class);
         } catch (IOException e) {
-            loggerService.log(String.format("There is error [%s]", e.getMessage()));
+            logger.log(String.format("There is error [%s]", e.getMessage()));
         }
 
         return "";
@@ -281,7 +281,7 @@ public class WatcherService extends Service implements Runnable {
         try (Response response = client.newCall(request).execute()) {
             return OBJECT_MAPPER.readValue(response.body().string(), HagglezonResponse.class);
         } catch (IOException e) {
-            loggerService.log(String.format("There is error [%s]", e.getMessage()));
+            logger.log(String.format("There is error [%s]", e.getMessage()));
         }
 
         return null;

@@ -37,6 +37,7 @@ public class Storage {
     private List<LogEntry> logEntryList = new ArrayList<>();
 
     private boolean change = false;
+    private Date savedAt = Util.date();
     private Context context;
 
     public void clean() {
@@ -77,7 +78,6 @@ public class Storage {
     public void create(LogEntry logEntry) {
         logEntry.setStorage(this);
         logEntryList.add(logEntry);
-
         notifyChange();
     }
 
@@ -125,6 +125,7 @@ public class Storage {
         priceError = false;
         priceErrorList = new ArrayList<>();
         searchLogList = new ArrayList<>();
+        logEntryList = new ArrayList<>();
     }
 
     public boolean isChange() {
@@ -155,6 +156,7 @@ public class Storage {
         priceError = Util.falseIfNull(hzwatchStorage.getPriceError());
         priceErrorList = Util.emptyListIfNull(hzwatchStorage.getPriceErrorList());
         searchLogList = Util.emptyListIfNull(hzwatchStorage.getSearchLogList());
+        logEntryList = Util.emptyListIfNull(hzwatchStorage.getLogEntryList());
 
         processPostLoad();
     }
@@ -175,8 +177,10 @@ public class Storage {
     }
 
     public void notifyChange() {
-        change = true;
-        save();
+        if (Util.secondsFrom(savedAt) >= 30) {
+            save();
+            savedAt = Util.date();
+        }
     }
 
     private void processPostLoad() {
@@ -202,6 +206,7 @@ public class Storage {
         hzwatchStorage.setPriceError(priceError);
         hzwatchStorage.setPriceErrorList(priceErrorList);
         hzwatchStorage.setSearchLogList(searchLogList);
+        hzwatchStorage.setLogEntryList(logEntryList);
 
         try (FileOutputStream fos = context.openFileOutput(FILE_NAME, Context.MODE_PRIVATE)) {
             String encoded = JSON_MAPPER.writeValueAsString(hzwatchStorage);
@@ -224,9 +229,18 @@ public class Storage {
         private Boolean priceError;
         private List<PriceError> priceErrorList;
         private List<SearchLog> searchLogList;
+        private List<LogEntry> logEntryList;
 
         public HzwatchStorage() {
 
+        }
+
+        public List<LogEntry> getLogEntryList() {
+            return logEntryList;
+        }
+
+        public void setLogEntryList(List<LogEntry> logEntryList) {
+            this.logEntryList = logEntryList;
         }
 
         public Boolean getPriceError() {

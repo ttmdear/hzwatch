@@ -2,6 +2,7 @@ package com.example.hzwatch.ui;
 
 import static java.lang.String.format;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -15,9 +16,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.hzwatch.R;
 import com.example.hzwatch.databinding.ActivityDevelopBinding;
-import com.example.hzwatch.databinding.StandardRecyclerItemBinding;
+import com.example.hzwatch.databinding.LogRecyclerItemBinding;
 import com.example.hzwatch.domain.LogEntry;
-import com.example.hzwatch.service.LoggerService;
+import com.example.hzwatch.service.Logger;
 import com.example.hzwatch.service.Services;
 import com.example.hzwatch.service.Storage;
 import com.example.hzwatch.service.WatcherService;
@@ -27,10 +28,10 @@ import java.util.List;
 
 public class DevelopActivity extends AppCompatActivity {
     private ActivityDevelopBinding binding;
-    private final LoggerService loggerService = Services.getLoggerService();
+    private final Logger logger = Services.getLogger();
     private final Storage storage = Services.getStorage();
 
-    private StandardRecyclerAdapter<LogEntry, StandardRecyclerItemBinding> recyclerAdapter;
+    private StandardRecyclerAdapter<LogEntry, LogRecyclerItemBinding> recyclerAdapter;
     private BroadcastReceiver watcherReceiver;
 
     @Override
@@ -58,22 +59,41 @@ public class DevelopActivity extends AppCompatActivity {
             updateView();
         });
 
-        recyclerAdapter = new StandardRecyclerAdapter<>(R.layout.standard_recycler_item, prepareList(), new StandardRecyclerAdapter.Controller<LogEntry, StandardRecyclerItemBinding>() {
+        final Activity activity = this;
+
+        recyclerAdapter = new StandardRecyclerAdapter<>(R.layout.log_recycler_item, prepareList(), new StandardRecyclerAdapter.Controller<LogEntry, LogRecyclerItemBinding>() {
             @Override
-            public void bind(StandardRecyclerItemBinding binding, LogEntry logEntry) {
-                binding.sriName.setText(format("%s - %s", logEntry.getAt(), logEntry.getMsg()));
-                binding.sriDescription.setVisibility(View.GONE);
-                binding.sriDelete.setVisibility(View.GONE);
+            public void bind(LogRecyclerItemBinding binding, LogEntry logEntry) {
+                String message = logEntry.getMsg();
+
+                if (message.length() > 300) {
+                    message = message.substring(0, 100);
+                }
+
+                binding.lriLog.setText(format("%s - %s", logEntry.getAt(), message));
             }
 
             @Override
-            public StandardRecyclerItemBinding create(View item) {
-                return StandardRecyclerItemBinding.bind(item);
+            public boolean onClickAction(LogEntry entity) {
+                Intent intent = new Intent(activity, DevelopLogEntryActivity.class);
+                intent.putExtra("logEntryId", entity.getId());
+                startActivity(intent);
+
+                return false;
+            }
+
+            @Override
+            public LogRecyclerItemBinding create(View item) {
+                return LogRecyclerItemBinding.bind(item);
             }
         });
 
         binding.adLogList.setAdapter(recyclerAdapter);
         binding.adLogList.setLayoutManager(new LinearLayoutManager(this));
+
+        binding.adReloadLogs.setOnClickListener(v -> {
+            recyclerAdapter.setItems(prepareList());
+        });
     }
 
     @Override
@@ -90,7 +110,7 @@ public class DevelopActivity extends AppCompatActivity {
     }
 
     private List<LogEntry> prepareList() {
-        return SortUtil.sortByDateDesc(loggerService.getLogEntryAll(), LogEntry::getAt);
+        return SortUtil.sortByDateDesc(logger.getLogEntryAll(), LogEntry::getAt);
     }
 
     public void updateView() {

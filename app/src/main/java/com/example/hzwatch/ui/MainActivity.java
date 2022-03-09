@@ -78,14 +78,14 @@ public class MainActivity extends AppCompatActivity {
 
         updateOkSeeButton();
 
-        WatcherWorker.planWork(this);
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             WatcherWorker.planPeriodicWork(this);
         }
 
         this.registerReceiver(actionChangeReceiver = this.new ActionChangeReceiver(), new IntentFilter(WatcherWorker.ACTION_CHANGE));
         this.registerReceiver(actionStatusChangeReceiver = this.new ActionStatusChangeReceiver(), new IntentFilter(WatcherWorker.ACTION_STATE_CHANGE));
+
+        WatcherWorker.planWork(this);
     }
 
     public void updateView() {
@@ -114,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
 
+        storage.save();
         unregisterReceiver(actionChangeReceiver);
     }
 

@@ -11,6 +11,7 @@ import java.util.List;
 public class ProductProcessor {
     private final Storage storage = Services.getStorage();
     private final HzwatchService hzwatchService = Services.getHzwatchService();
+    private final Logger logger = Services.getLogger();
 
     private final List<String> PRICE_COUNTRY_TO_OMIT = Collections.singletonList("se");
 

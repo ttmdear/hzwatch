@@ -4,9 +4,11 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="..\:/home/tmp/hzwatch/app/src/main/res/layout/activity_develop.xml" value="0.30932971014492755" />
+        <entry key="..\:/home/tmp/hzwatch/app/src/main/res/layout/activity_develop_log_entry.xml" value="0.33229166666666665" />
         <entry key="..\:/home/tmp/hzwatch/app/src/main/res/layout/activity_main.xml" value="0.40398550724637683" />
         <entry key="..\:/home/tmp/hzwatch/app/src/main/res/layout/activity_search_key_list.xml" value="0.36614583333333334" />
         <entry key="..\:/home/tmp/hzwatch/app/src/main/res/layout/fragment_first.xml" value="0.2838541666666667" />
+        <entry key="..\:/home/tmp/hzwatch/app/src/main/res/layout/log_recycler_item.xml" value="0.4017210144927536" />
         <entry key="..\:/home/tmp/hzwatch/app/src/main/res/layout/price_error_deleted_list.xml" value="0.3188405797101449" />
         <entry key="..\:/home/tmp/hzwatch/app/src/main/res/layout/price_error_list.xml" value="0.296875" />
         <entry key="..\:/home/tmp/hzwatch/app/src/main/res/layout/search_log_list.xml" value="0.296875" />

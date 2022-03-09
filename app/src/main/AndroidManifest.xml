@@ -22,6 +22,11 @@
             android:label="@string/title_activity_develop"
             android:theme="@style/Theme.Hzwatch.NoActionBar" />
         <activity
+            android:name=".ui.DevelopLogEntryActivity"
+            android:exported="false"
+            android:label="@string/title_activity_develop"
+            android:theme="@style/Theme.Hzwatch.NoActionBar" />
+        <activity
             android:name=".ui.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Hzwatch.NoActionBar">

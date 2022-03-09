@@ -10,7 +10,7 @@ public class Services {
     private Storage storage = null;
     private HzwatchService hzwatchService = null;
     private UiService uiService = null;
-    private LoggerService loggerService = null;
+    private Logger logger = null;
     private ProductProcessor productProcessor = null;
     private final UncaughtExceptionHandler uncaughtExceptionHandler;
 
@@ -20,7 +20,7 @@ public class Services {
         uncaughtExceptionHandler = new UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
-                loggerService.log(e.getMessage());
+                logger.log(e.getMessage());
 
                 if (defaultExceptionHandler != null) {
                     defaultExceptionHandler.uncaughtException(t, e);
@@ -43,14 +43,14 @@ public class Services {
         return instance;
     }
 
-    public static LoggerService getLoggerService() {
+    public static Logger getLogger() {
         Services services = getInstance();
 
-        if (services.loggerService == null) {
-            services.loggerService = new LoggerService();
+        if (services.logger == null) {
+            services.logger = new Logger();
         }
 
-        return services.loggerService;
+        return services.logger;
     }
 
     public static Storage getStorage() {

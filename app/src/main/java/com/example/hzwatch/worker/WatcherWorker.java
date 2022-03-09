@@ -7,7 +7,7 @@ import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
-import androidx.work.Constraints;
+import androidx.work.Data;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
@@ -19,14 +19,16 @@ import androidx.work.WorkerParameters;
 import com.example.hzwatch.R;
 import com.example.hzwatch.domain.HagglezonResponse;
 import com.example.hzwatch.service.HzwatchService;
-import com.example.hzwatch.service.LoggerService;
+import com.example.hzwatch.service.Logger;
 import com.example.hzwatch.service.ProductProcessor;
 import com.example.hzwatch.service.Services;
+import com.example.hzwatch.service.UiService;
 import com.example.hzwatch.util.Util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.Random;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.MediaType;
@@ -49,7 +51,7 @@ public class WatcherWorker extends Worker {
     private static final Random RANDOM = new Random();
 
     private final HzwatchService hzwatchService = Services.getHzwatchService();
-    private final LoggerService loggerService = Services.getLoggerService();
+    private final Logger logger = Services.getLogger();
     private final ProductProcessor productProcessor = Services.getProductProcessor();
 
     private MediaPlayer playerAlarm;
@@ -89,24 +91,29 @@ public class WatcherWorker extends Worker {
     }
 
     private void processSearch(String searchKey) {
-        loggerService.log(String.format("Process search for search key [%s]", searchKey));
+        logger.log("Process search for key [%s]", searchKey);
 
         int productsNumber = 0;
         int page = 0;
 
         while (true) {
-            sendBroadcastActionStateChange(String.format("Szukam '%s', liczba produktów %s", searchKey, productsNumber));
+            sendBroadcastActionStateChange(String.format("Szukam %s, liczba produktów %s", searchKey, productsNumber));
 
             HagglezonResponse response = search(searchKey, ++page);
 
             if (isEmptyResponse(response)) {
+                logger.log("Response is empty.");
                 break;
             }
 
             productsNumber += response.getData().getSearchProducts().getProducts().size();
             processResponse(searchKey, response);
 
-            Util.sleep((5 + RANDOM.nextInt(10)) * 1000);
+            try {
+                Thread.sleep((2 + RANDOM.nextInt(5)) * 1000);
+            } catch (InterruptedException e) {
+                logger.log("Thread interrupted. Message [%s].", e.getMessage());
+            }
         }
 
         hzwatchService.postSearch(searchKey, productsNumber);
@@ -118,6 +125,7 @@ public class WatcherWorker extends Worker {
     }
 
     private HagglezonResponse search(String search, int page) {
+        logger.log("Search key [%s], page [%s]", search, page);
         String body = "{\"operationName\":\"SearchResults\",\"variables\":{\"lang\":\"en\",\"currency\":\"EUR\",\"filters\":{},\"search\":\"" + search + "\",\"page\":" + page + ",\"country\":\"de\"},\"query\":\"query SearchResults($search: String!, $country: String, $currency: String!, $lang: String!, $page: Int, $filters: SearchFilters) {\\n  searchProducts(searchTerm: $search, country: $country, productConfig: {language: $lang, currency: $currency}, page: $page, filters: $filters) {\\n    products {\\n      id\\n      title\\n      brand\\n      tags\\n      related_items\\n      prices {\\n        country\\n        price\\n        currency\\n        url\\n        __typename\\n      }\\n      all_images {\\n        medium\\n        large\\n        __typename\\n      }\\n      __typename\\n    }\\n    next {\\n      country\\n      page\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n\"}";
 
         Request request = new Request.Builder()
@@ -125,17 +133,21 @@ public class WatcherWorker extends Worker {
             .addHeader("Accept", "*/*")
             // .addHeader("Accept-encoding", "gzip, deflate, br")
             .addHeader("Accept-Language", "pl,en-US;q=0.7,en;q=0.3")
+            .addHeader("Cache-Control", "no-cache")
             .addHeader("Connection", "keep-alive")
             .addHeader("Content-Length", String.valueOf(body.length()))
             .addHeader("Content-Type", "application/json")
-            .addHeader("Cookie", "_ga=GA1.2.1602304383.1646684304; _gid=GA1.2.1510141826.1646684304; _gat=1; __cf_bm=aBfbOheZHZ92h3XdTx7xFBcYHbUaDCt.9WMir5svTlE-1646684303-0-AZ5UM7JQNgdiLOfBoYBv98Lq0OHW2cJzm1Ot30W+Q60ZXHOQlJS/kutpkkjJgGAoyszy2dnJdmdCJti/F/0RRRD+aAys3rbGZa7vryZtOPZFVoZepdNnBGK3II4Feh5C+g==")
+            .addHeader("Cookie", "_ga=GA1.2.1390425837.1645716030; _gid=GA1.2.1091289632.1646823835; _gat=1; __cf_bm=RlQUmieUxB2TNW8yP0lvEFJMNDYlsGZCaKfJhAJK4pU-1646823835-0-AWmwu34jggxGAP4FeMKqI9MXtDV3slMYAxF1Qi9WE9mWoWYf5p221qqKJgKFbude3wMEsGMAhpuNdoq/eKB+SbYDGnF7AbXEkaFzBw8ANSwRh1wMFT+w+pxalPB0XIETxQ==")
             .addHeader("Host", "graphql.hagglezon.com")
             .addHeader("Origin", "https://www.hagglezon.com")
             .addHeader("Referer", "https://www.hagglezon.com/")
+            .addHeader("Pragma", "no-cache")
             .addHeader("Sec-Fetch-Dest", "empty")
             .addHeader("Sec-Fetch-Mode", "cors")
             .addHeader("Sec-Fetch-Site", "same-site")
-            .addHeader("TE", "trailers")
+            .addHeader("Sec-Ch-Ua", " Not A;Brand\";v=\"99\", \"Chromium\";v=\"99\", \"Google Chrome\";v=\"99")
+            .addHeader("Sec-Ch-Ua-mobile", "?0")
+            .addHeader("Sec-Ch-Ua-platform", "Windows")
             .addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0")
             .post(RequestBody.create(body, JSON))
             .build();
@@ -143,9 +155,11 @@ public class WatcherWorker extends Worker {
         OkHttpClient client = new OkHttpClient();
 
         try (Response response = client.newCall(request).execute()) {
-            return OBJECT_MAPPER.readValue(response.body().string(), HagglezonResponse.class);
+            String content = response.body().string();
+            logger.log("Response for key [%s], page %s, content [%s]", search, page, content);
+            return OBJECT_MAPPER.readValue(content, HagglezonResponse.class);
         } catch (IOException e) {
-            loggerService.log(String.format("There is error [%s]", e.getMessage()));
+            logger.log("IO exception for key [%s], page %s, message [%s]", search, page, e.getMessage());
         }
 
         return null;
@@ -165,44 +179,64 @@ public class WatcherWorker extends Worker {
     }
 
     public static void planWork(Context context) {
-        OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(WatcherWorker.class)
-            .setInitialDelay(10, TimeUnit.SECONDS)
+        Data data = new Data.Builder()
+            .putString("MODE", "NORMAL")
             .build();
 
-        WorkManager.getInstance(context).enqueueUniqueWork(WORKER_TAG, ExistingWorkPolicy.APPEND, request);
+        OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(WatcherWorker.class)
+            .setInitialDelay(60, TimeUnit.SECONDS)
+            .setInputData(data)
+            .build();
 
-        Services.getLoggerService().log("Next work planned.");
+        WorkManager.getInstance(context).enqueueUniqueWork(WORKER_TAG, ExistingWorkPolicy.KEEP, request);
+        // WorkManager.getInstance(context).enqueue(request);
+
+        Services.getLogger().log("Next work planned.");
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     public static void planPeriodicWork(Context context) {
-        Constraints constraints = new Constraints.Builder()
-            .setRequiresDeviceIdle(true)
+        // Constraints constraints = new Constraints.Builder()
+        //     .setRequiresDeviceIdle(true)
+        //     .build();
+
+        Data data = new Data.Builder()
+            .putString("MODE", "PERIODIC")
             .build();
 
-        PeriodicWorkRequest periodicWorkRequest = new PeriodicWorkRequest.Builder(WatcherWorker.class, 15L, TimeUnit.MINUTES)
-            .setConstraints(constraints)
+        // PeriodicWorkRequest periodicWorkRequest = new PeriodicWorkRequest.Builder(WatcherWorker.class, 15L, TimeUnit.MINUTES)
+
+        PeriodicWorkRequest periodicWorkRequest = new PeriodicWorkRequest.Builder(WatcherWorkerPeriodic.class, 15L, TimeUnit.MINUTES)
+            // .setConstraints(constraints)
+            .setInputData(data)
             .build();
 
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(WORKER_PERIODIC_TAG, ExistingPeriodicWorkPolicy.KEEP, periodicWorkRequest);
 
-        Services.getLoggerService().log("Next periodic work planned.");
+        Services.getLogger().log("Next periodic work planned.");
     }
 
     @NonNull
     @Override
     public Result doWork() {
         try {
-            doWorkInner();
+            doWorkInner(getInputData().getString("MODE"));
         } catch (Exception exception) {
-            loggerService.log(exception.getMessage());
+            logger.log(exception.getMessage());
         }
 
-        planWork(context);
+
+        new Thread(() -> {
+            Util.sleep(1000);
+            planWork(context);
+        }).start();
+
         return Result.success();
     }
 
-    public void doWorkInner() {
+    public void doWorkInner(String mode) {
+        logger.log("Do work in mode %s", mode);
+
         if (hzwatchService.isPriceError()) {
             playerBeep.start();
         }

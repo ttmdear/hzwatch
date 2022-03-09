@@ -14,6 +14,7 @@ public class HzwatchService {
     private static final Random RANDOM = new Random();
 
     private final Storage storage = Services.getStorage();
+    private final Logger logger = Services.getLogger();
 
     public void createSearchKey(String searchKeyValue) {
         SearchKey searchKey = new SearchKey();
@@ -36,6 +37,8 @@ public class HzwatchService {
     }
 
     public String getNextSearchKeyToSearch() {
+        logger.log("Get next search");
+
         List<SearchLog> searchLogList = storage.findSearchLogAll();
         List<SearchKey> searchKeyList = storage.findSearchKeyAll();
 
@@ -50,11 +53,13 @@ public class HzwatchService {
             }
 
             if (!found) {
+                logger.log("Return key %s (1)", searchKey.getValue());
                 return searchKey.getValue();
             }
         }
 
         if (searchKeyList.isEmpty()) {
+            logger.log("No search key (1)");
             return null;
         }
 
@@ -70,10 +75,12 @@ public class HzwatchService {
             SearchKey searchKey = Util.find(searchKeyList, searchKey1 -> searchKey1.getValue().equals(searchLog.getSearchKey()));
 
             if (searchKey != null) {
+                logger.log("Return key %s (2)", searchKey.getValue());
                 return searchKey.getValue();
             }
         }
 
+        logger.log("No search key (2)");
         return null;
     }
 
@@ -91,6 +98,8 @@ public class HzwatchService {
     }
 
     public void postSearch(String searchKey, Integer productsNumber) {
+        logger.log("Post search [%s], productsNumber [%s]", searchKey, productsNumber);
+
         SearchLog searchLog = Util.find(storage.findSearchLogAll(), searchLog1 -> searchLog1.getSearchKey().equals(searchKey));
 
         if (searchLog == null) {
