@@ -1,5 +1,7 @@
 package com.example.hzwatch.worker;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
@@ -27,6 +29,7 @@ import com.example.hzwatch.util.Util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
@@ -37,7 +40,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-public class WatcherWorker extends Worker {
+public class WatcherWorker {
     public static final String ACTION_CHANGE = "WatcherWorker.Action.Change";
     public static final String ACTION_STATE_CHANGE = "WatcherWorker.Action.State.Change";
     private static final String TAG = "WatcherWorker";
@@ -58,14 +61,21 @@ public class WatcherWorker extends Worker {
     private MediaPlayer playerBeep;
     private boolean stop = false;
 
-    public WatcherWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
-        super(context, workerParams);
-
+    public WatcherWorker(@NonNull Context context) {
         playerAlarm = MediaPlayer.create(context, R.raw.alarm);
         playerBeep = MediaPlayer.create(context, R.raw.beep_long);
 
         this.context = context;
     }
+
+    // public WatcherWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
+    //     super(context, workerParams);
+
+    //     playerAlarm = MediaPlayer.create(context, R.raw.alarm);
+    //     playerBeep = MediaPlayer.create(context, R.raw.beep_long);
+
+    //     this.context = context;
+    // }
 
     private void runPriceErrorAlarm() {
         playerBeep.start();
@@ -179,59 +189,68 @@ public class WatcherWorker extends Worker {
     }
 
     public static void planWork(Context context) {
-        Data data = new Data.Builder()
-            .putString("MODE", "NORMAL")
-            .build();
+        // Data data = new Data.Builder()
+        //     .putString("MODE", "NORMAL")
+        //     .build();
 
-        OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(WatcherWorker.class)
-            .setInitialDelay(60, TimeUnit.SECONDS)
-            .setInputData(data)
-            .build();
+        // OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(WatcherWorker.class)
+        //     .setInitialDelay(60, TimeUnit.SECONDS)
+        //     .setInputData(data)
+        //     .build();
 
-        WorkManager.getInstance(context).enqueueUniqueWork(WORKER_TAG, ExistingWorkPolicy.KEEP, request);
-        // WorkManager.getInstance(context).enqueue(request);
+        // WorkManager.getInstance(context).enqueueUniqueWork(WORKER_TAG, ExistingWorkPolicy.KEEP, request);
+
+        // Services.getLogger().log("Next work planned.");
+    }
+
+    public static void planWorkAlarm(Context context) {
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(context, WatcherAlarmReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 1, intent, 0);
+
+        Date date = new Date(new Date().getTime() + (5 * 60 * 1000));
+
+        alarmManager.setExact(AlarmManager.RTC_WAKEUP, date.getTime(), pendingIntent);
 
         Services.getLogger().log("Next work planned.");
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     public static void planPeriodicWork(Context context) {
-        // Constraints constraints = new Constraints.Builder()
-        //     .setRequiresDeviceIdle(true)
+        // Data data = new Data.Builder()
+        //     .putString("MODE", "PERIODIC")
         //     .build();
 
-        Data data = new Data.Builder()
-            .putString("MODE", "PERIODIC")
-            .build();
+        // PeriodicWorkRequest periodicWorkRequest = new PeriodicWorkRequest.Builder(WatcherWorkerPeriodic.class, 15L, TimeUnit.MINUTES)
+        //     .setInputData(data)
+        //     .build();
 
-        // PeriodicWorkRequest periodicWorkRequest = new PeriodicWorkRequest.Builder(WatcherWorker.class, 15L, TimeUnit.MINUTES)
+        // WorkManager.getInstance(context).enqueueUniquePeriodicWork(WORKER_PERIODIC_TAG, ExistingPeriodicWorkPolicy.KEEP, periodicWorkRequest);
 
-        PeriodicWorkRequest periodicWorkRequest = new PeriodicWorkRequest.Builder(WatcherWorkerPeriodic.class, 15L, TimeUnit.MINUTES)
-            // .setConstraints(constraints)
-            .setInputData(data)
-            .build();
-
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(WORKER_PERIODIC_TAG, ExistingPeriodicWorkPolicy.KEEP, periodicWorkRequest);
-
-        Services.getLogger().log("Next periodic work planned.");
+        // Services.getLogger().log("Next periodic work planned.");
     }
 
-    @NonNull
-    @Override
-    public Result doWork() {
+    // public Result doWork() {
+    //     try {
+    //         doWorkInner(getInputData().getString("MODE"));
+    //     } catch (Exception exception) {
+    //         logger.log(exception.getMessage());
+    //     }
+
+    //     new Thread(() -> {
+    //         Util.sleep(1000);
+    //         planWork(context);
+    //     }).start();
+
+    //     return Result.success();
+    // }
+
+    public void doWork() {
         try {
-            doWorkInner(getInputData().getString("MODE"));
+            doWorkInner("NORMAL");
         } catch (Exception exception) {
             logger.log(exception.getMessage());
         }
-
-
-        new Thread(() -> {
-            Util.sleep(1000);
-            planWork(context);
-        }).start();
-
-        return Result.success();
     }
 
     public void doWorkInner(String mode) {
@@ -243,8 +262,14 @@ public class WatcherWorker extends Worker {
 
         String searchKey;
 
+        int i = 0;
         while((searchKey = hzwatchService.getNextSearchKeyToSearch()) != null) {
             processSearch(searchKey);
+            i++;
+
+            if (i >= 2) {
+                break;
+            }
         }
     }
 }

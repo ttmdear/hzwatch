@@ -85,7 +85,8 @@ public class MainActivity extends AppCompatActivity {
         this.registerReceiver(actionChangeReceiver = this.new ActionChangeReceiver(), new IntentFilter(WatcherWorker.ACTION_CHANGE));
         this.registerReceiver(actionStatusChangeReceiver = this.new ActionStatusChangeReceiver(), new IntentFilter(WatcherWorker.ACTION_STATE_CHANGE));
 
-        WatcherWorker.planWork(this);
+        // WatcherWorker.planWork(this);
+        WatcherWorker.planWorkAlarm(this);
     }
 
     public void updateView() {
