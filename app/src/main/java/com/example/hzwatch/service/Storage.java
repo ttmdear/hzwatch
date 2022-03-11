@@ -8,6 +8,7 @@ import com.example.hzwatch.domain.LogEntry;
 import com.example.hzwatch.domain.PriceError;
 import com.example.hzwatch.domain.SearchKey;
 import com.example.hzwatch.domain.SearchLog;
+import com.example.hzwatch.domain.WatcherAlarm;
 import com.example.hzwatch.ui.MainActivity;
 import com.example.hzwatch.util.Util;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,6 +36,7 @@ public class Storage {
     private List<PriceError> priceErrorList;
     private List<SearchLog> searchLogList;
     private List<LogEntry> logEntryList = new ArrayList<>();
+    private List<WatcherAlarm> watcherAlarmList;
 
     private boolean change = false;
     private Date savedAt = Util.date();
@@ -81,8 +83,23 @@ public class Storage {
         notifyChange();
     }
 
+    public void create(WatcherAlarm watcherAlarm) {
+        watcherAlarm.setStorage(this);
+        watcherAlarmList.add(watcherAlarm);
+        notifyChange();
+    }
+
+    public void deleteWatcherAlarmAll() {
+        watcherAlarmList.clear();
+        notifyChange();
+    }
+
     public List<LogEntry> findLogEntryAll() {
         return logEntryList;
+    }
+
+    public List<WatcherAlarm> findWatcherAlarmAll() {
+        return watcherAlarmList;
     }
 
     public void movePriceError(Integer priceErrorId) {
@@ -92,6 +109,11 @@ public class Storage {
 
     public void deleteSearchKey(Integer searchKeyId) {
         searchKeyList = Util.filter(searchKeyList, searchKey -> !searchKey.getId().equals(searchKeyId));
+        notifyChange();
+    }
+
+    public void deleteWatcherAlarm(Integer watcherAlarmId) {
+        watcherAlarmList = Util.filter(watcherAlarmList, watcherAlarm -> !watcherAlarm.getId().equals(watcherAlarmId));
         notifyChange();
     }
 
@@ -126,6 +148,7 @@ public class Storage {
         priceErrorList = new ArrayList<>();
         searchLogList = new ArrayList<>();
         logEntryList = new ArrayList<>();
+        watcherAlarmList = new ArrayList<>();
     }
 
     public boolean isChange() {
@@ -157,6 +180,7 @@ public class Storage {
         priceErrorList = Util.emptyListIfNull(hzwatchStorage.getPriceErrorList());
         searchLogList = Util.emptyListIfNull(hzwatchStorage.getSearchLogList());
         logEntryList = Util.emptyListIfNull(hzwatchStorage.getLogEntryList());
+        watcherAlarmList = Util.emptyListIfNull(hzwatchStorage.getWatcherAlarmList());
 
         processPostLoad();
     }
@@ -177,7 +201,7 @@ public class Storage {
     }
 
     public void notifyChange() {
-        if (Util.secondsFrom(savedAt) >= 30) {
+        if (Util.secondsFrom(savedAt) >= 50) {
             save();
             savedAt = Util.date();
         }
@@ -230,6 +254,7 @@ public class Storage {
         private List<PriceError> priceErrorList;
         private List<SearchLog> searchLogList;
         private List<LogEntry> logEntryList;
+        private List<WatcherAlarm> watcherAlarmList;
 
         public HzwatchStorage() {
 
@@ -281,6 +306,14 @@ public class Storage {
 
         public void setVersion(int version) {
             this.version = version;
+        }
+
+        public List<WatcherAlarm> getWatcherAlarmList() {
+            return watcherAlarmList;
+        }
+
+        public void setWatcherAlarmList(List<WatcherAlarm> watcherAlarmList) {
+            this.watcherAlarmList = watcherAlarmList;
         }
     }
 }

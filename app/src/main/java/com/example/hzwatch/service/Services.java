@@ -77,7 +77,7 @@ public class Services {
         Services services = getInstance();
 
         if (services.hzwatchService == null) {
-            services.hzwatchService = new HzwatchService();
+            services.hzwatchService = new HzwatchService(getStorage());
         }
 
         return services.hzwatchService;

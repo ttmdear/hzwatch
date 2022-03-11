@@ -2,6 +2,7 @@ package com.example.hzwatch.util;
 
 import com.example.hzwatch.BuildConfig;
 import com.example.hzwatch.domain.Entity;
+import com.example.hzwatch.service.Services;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -34,6 +35,10 @@ public class Util {
 
     public static Date datePlusSeconds(Date date, Integer time) {
         return new Date(date.getTime() + time * 1000);
+    }
+
+    public static Date datePlusMinutes(Date date, Integer minutes) {
+        return new Date(date.getTime() + minutes * 60 * 1000);
     }
 
     public static <T> List<T> filter(List<T> value, Predicate<T> predicate) {
@@ -183,7 +188,7 @@ public class Util {
         try {
             Thread.sleep(time);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Services.getLogger().log("Thread interrupted %s", e.getMessage());
         }
     }
 

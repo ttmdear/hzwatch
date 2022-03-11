@@ -3,7 +3,6 @@ package com.example.hzwatch.ui;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentPagerAdapter;
 
@@ -11,14 +10,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 
 import com.example.hzwatch.databinding.ActivityMainBinding;
 import com.example.hzwatch.service.Services;
 import com.example.hzwatch.service.Storage;
-import com.example.hzwatch.service.StorageSaverService;
 import com.example.hzwatch.worker.WatcherWorker;
 
 import java.util.Arrays;
@@ -78,15 +74,10 @@ public class MainActivity extends AppCompatActivity {
 
         updateOkSeeButton();
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            WatcherWorker.planPeriodicWork(this);
-        }
-
         this.registerReceiver(actionChangeReceiver = this.new ActionChangeReceiver(), new IntentFilter(WatcherWorker.ACTION_CHANGE));
         this.registerReceiver(actionStatusChangeReceiver = this.new ActionStatusChangeReceiver(), new IntentFilter(WatcherWorker.ACTION_STATE_CHANGE));
 
-        // WatcherWorker.planWork(this);
-        WatcherWorker.planWorkAlarm(this);
+        WatcherWorker.planWatcherAlarm(this);
     }
 
     public void updateView() {

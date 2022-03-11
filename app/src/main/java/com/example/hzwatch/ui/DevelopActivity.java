@@ -21,7 +21,6 @@ import com.example.hzwatch.domain.LogEntry;
 import com.example.hzwatch.service.Logger;
 import com.example.hzwatch.service.Services;
 import com.example.hzwatch.service.Storage;
-import com.example.hzwatch.service.WatcherService;
 import com.example.hzwatch.util.SortUtil;
 
 import java.util.List;
@@ -32,7 +31,6 @@ public class DevelopActivity extends AppCompatActivity {
     private final Storage storage = Services.getStorage();
 
     private StandardRecyclerAdapter<LogEntry, LogRecyclerItemBinding> recyclerAdapter;
-    private BroadcastReceiver watcherReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,15 +38,6 @@ public class DevelopActivity extends AppCompatActivity {
 
         binding = ActivityDevelopBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
-        watcherReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                updateView();
-            }
-        };
-
-        LocalBroadcastManager.getInstance(this).registerReceiver(watcherReceiver, new IntentFilter(WatcherService.ACTION_CHANGE));
 
         binding.adCleanHzData.setOnClickListener(v -> {
             storage.cleanHzData();
@@ -94,13 +83,6 @@ public class DevelopActivity extends AppCompatActivity {
         binding.adReloadLogs.setOnClickListener(v -> {
             recyclerAdapter.setItems(prepareList());
         });
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(watcherReceiver);
     }
 
     @Override

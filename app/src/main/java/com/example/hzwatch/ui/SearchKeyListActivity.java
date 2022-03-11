@@ -55,7 +55,7 @@ public class SearchKeyListActivity extends AppCompatActivity {
         binding.asklAdd.setOnClickListener(v -> {
             String searchKeyString = binding.asklName.getText().toString();
 
-            if (!searchKeyString.isEmpty() && !hzwatchService.existsSearchKey(searchKeyString)) {
+            if (!searchKeyString.isEmpty() && hzwatchService.notExistsSearchKey(searchKeyString)) {
                 hzwatchService.createSearchKey(searchKeyString);
                 reloadList();
             }

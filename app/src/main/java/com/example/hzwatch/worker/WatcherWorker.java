@@ -6,33 +6,26 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
-import androidx.work.Data;
-import androidx.work.ExistingPeriodicWorkPolicy;
-import androidx.work.ExistingWorkPolicy;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.PeriodicWorkRequest;
-import androidx.work.WorkManager;
-import androidx.work.Worker;
-import androidx.work.WorkerParameters;
 
 import com.example.hzwatch.R;
 import com.example.hzwatch.domain.HagglezonResponse;
+import com.example.hzwatch.domain.WatcherAlarm;
 import com.example.hzwatch.service.HzwatchService;
 import com.example.hzwatch.service.Logger;
 import com.example.hzwatch.service.ProductProcessor;
 import com.example.hzwatch.service.Services;
-import com.example.hzwatch.service.UiService;
+import com.example.hzwatch.service.Storage;
 import com.example.hzwatch.util.Util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
-import java.util.TreeMap;
-import java.util.concurrent.TimeUnit;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -43,23 +36,23 @@ import okhttp3.Response;
 public class WatcherWorker {
     public static final String ACTION_CHANGE = "WatcherWorker.Action.Change";
     public static final String ACTION_STATE_CHANGE = "WatcherWorker.Action.State.Change";
+
+    public static final Integer TIMER_INTERVAL = 10000;
+
     private static final String TAG = "WatcherWorker";
     private static final String WORKER_TAG = "WatcherWorker";
     private static final String WORKER_PERIODIC_TAG = "WatcherPeriodicWorker";
-
-    private final Context context;
-
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Random RANDOM = new Random();
-
+    private final Context context;
     private final HzwatchService hzwatchService = Services.getHzwatchService();
     private final Logger logger = Services.getLogger();
     private final ProductProcessor productProcessor = Services.getProductProcessor();
 
-    private MediaPlayer playerAlarm;
-    private MediaPlayer playerBeep;
-    private boolean stop = false;
+    private final MediaPlayer playerAlarm;
+    private final MediaPlayer playerBeep;
+    private final boolean stop = false;
 
     public WatcherWorker(@NonNull Context context) {
         playerAlarm = MediaPlayer.create(context, R.raw.alarm);
@@ -77,8 +70,82 @@ public class WatcherWorker {
     //     this.context = context;
     // }
 
-    private void runPriceErrorAlarm() {
-        playerBeep.start();
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public static void planPeriodicWork(Context context) {
+        // Data data = new Data.Builder()
+        //     .putString("MODE", "PERIODIC")
+        //     .build();
+
+        // PeriodicWorkRequest periodicWorkRequest = new PeriodicWorkRequest.Builder(WatcherWorkerPeriodic.class, 15L, TimeUnit.MINUTES)
+        //     .setInputData(data)
+        //     .build();
+
+        // WorkManager.getInstance(context).enqueueUniquePeriodicWork(WORKER_PERIODIC_TAG, ExistingPeriodicWorkPolicy.KEEP, periodicWorkRequest);
+
+        // Services.getLogger().log("Next periodic work planned.");
+    }
+
+    public static void planWork(Context context) {
+        // Data data = new Data.Builder()
+        //     .putString("MODE", "NORMAL")
+        //     .build();
+
+        // OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(WatcherWorker.class)
+        //     .setInitialDelay(60, TimeUnit.SECONDS)
+        //     .setInputData(data)
+        //     .build();
+
+        // WorkManager.getInstance(context).enqueueUniqueWork(WORKER_TAG, ExistingWorkPolicy.KEEP, request);
+
+        // Services.getLogger().log("Next work planned.");
+    }
+
+    public static void planWatcherAlarm(Context context) {
+        HzwatchService hzwatchService = Services.getHzwatchService();
+
+        if (hzwatchService.isWatcherAlarmPlanned()) {
+            return;
+        }
+
+        Date plannedAt = Util.datePlusMinutes(new Date(), 1);
+
+        hzwatchService.saveWatcherAlarmPlanned(plannedAt);
+
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(context, WatcherAlarmReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 1, intent, 0);
+
+        alarmManager.setExact(AlarmManager.RTC_WAKEUP, plannedAt.getTime(), pendingIntent);
+
+        Services.getLogger().log("Next work planned.");
+    }
+
+    public void doWork() {
+        try {
+            doWorkInner();
+        } catch (Exception exception) {
+            logger.log(exception.getMessage());
+        }
+    }
+
+    public void doWorkInner() {
+        logger.log("Do work");
+
+        if (hzwatchService.isPriceError()) {
+            new Thread(playerBeep::start).start();
+        }
+
+        String searchKey;
+
+        int i = 0;
+        while ((searchKey = hzwatchService.getNextSearchKeyToSearch()) != null) {
+            processSearch(searchKey);
+            i++;
+
+            if (i >= 2) {
+                break;
+            }
+        }
     }
 
     private boolean isEmptyResponse(HagglezonResponse response) {
@@ -101,10 +168,12 @@ public class WatcherWorker {
     }
 
     private void processSearch(String searchKey) {
-        logger.log("Process search for key [%s]", searchKey);
+        logger.log("Search for key [%s]", searchKey);
 
         int productsNumber = 0;
         int page = 0;
+
+        // resolveCookie();
 
         while (true) {
             sendBroadcastActionStateChange(String.format("Szukam %s, liczba produktów %s", searchKey, productsNumber));
@@ -112,7 +181,6 @@ public class WatcherWorker {
             HagglezonResponse response = search(searchKey, ++page);
 
             if (isEmptyResponse(response)) {
-                logger.log("Response is empty.");
                 break;
             }
 
@@ -120,7 +188,7 @@ public class WatcherWorker {
             processResponse(searchKey, response);
 
             try {
-                Thread.sleep((2 + RANDOM.nextInt(5)) * 1000);
+                Thread.sleep(2000);
             } catch (InterruptedException e) {
                 logger.log("Thread interrupted. Message [%s].", e.getMessage());
             }
@@ -130,12 +198,13 @@ public class WatcherWorker {
 
         sendBroadcastActionStateChange(String.format("Przeszukałem %s produktów dla słowa %s", productsNumber, searchKey));
         sendBroadcastActionChange();
+    }
 
-        // playerBeep.start();
+    private void runPriceErrorAlarm() {
+        playerBeep.start();
     }
 
     private HagglezonResponse search(String search, int page) {
-        logger.log("Search key [%s], page [%s]", search, page);
         String body = "{\"operationName\":\"SearchResults\",\"variables\":{\"lang\":\"en\",\"currency\":\"EUR\",\"filters\":{},\"search\":\"" + search + "\",\"page\":" + page + ",\"country\":\"de\"},\"query\":\"query SearchResults($search: String!, $country: String, $currency: String!, $lang: String!, $page: Int, $filters: SearchFilters) {\\n  searchProducts(searchTerm: $search, country: $country, productConfig: {language: $lang, currency: $currency}, page: $page, filters: $filters) {\\n    products {\\n      id\\n      title\\n      brand\\n      tags\\n      related_items\\n      prices {\\n        country\\n        price\\n        currency\\n        url\\n        __typename\\n      }\\n      all_images {\\n        medium\\n        large\\n        __typename\\n      }\\n      __typename\\n    }\\n    next {\\n      country\\n      page\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n\"}";
 
         Request request = new Request.Builder()
@@ -175,59 +244,25 @@ public class WatcherWorker {
         return null;
     }
 
-    private void sendBroadcastActionChange() {
-        Intent intent=new Intent();
-        intent.setAction(ACTION_CHANGE);
-        context.sendBroadcast(intent);
-    }
+    private String resolveCookie() {
+        Request request = new Request.Builder()
+            .url("https://hagglezon.com")
+            .addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
+            // .addHeader("Accept-encoding", "gzip, deflate, br")
+            .addHeader("Accept-Language", "pl-PL,pl;q=0.9")
+            .addHeader("Cache-Control", "no-cache")
+            .addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0")
+            .build();
 
-    private void sendBroadcastActionStateChange(String msg) {
-        Intent intent=new Intent();
-        intent.setAction(ACTION_STATE_CHANGE);
-        intent.putExtra("msg", msg);
-        context.sendBroadcast(intent);
-    }
+        OkHttpClient client = new OkHttpClient();
 
-    public static void planWork(Context context) {
-        // Data data = new Data.Builder()
-        //     .putString("MODE", "NORMAL")
-        //     .build();
+        try (Response response = client.newCall(request).execute()) {
+            String content = response.body().string();
+            return content;
+        } catch (IOException e) {
+        }
 
-        // OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(WatcherWorker.class)
-        //     .setInitialDelay(60, TimeUnit.SECONDS)
-        //     .setInputData(data)
-        //     .build();
-
-        // WorkManager.getInstance(context).enqueueUniqueWork(WORKER_TAG, ExistingWorkPolicy.KEEP, request);
-
-        // Services.getLogger().log("Next work planned.");
-    }
-
-    public static void planWorkAlarm(Context context) {
-        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent(context, WatcherAlarmReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 1, intent, 0);
-
-        Date date = new Date(new Date().getTime() + (5 * 60 * 1000));
-
-        alarmManager.setExact(AlarmManager.RTC_WAKEUP, date.getTime(), pendingIntent);
-
-        Services.getLogger().log("Next work planned.");
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    public static void planPeriodicWork(Context context) {
-        // Data data = new Data.Builder()
-        //     .putString("MODE", "PERIODIC")
-        //     .build();
-
-        // PeriodicWorkRequest periodicWorkRequest = new PeriodicWorkRequest.Builder(WatcherWorkerPeriodic.class, 15L, TimeUnit.MINUTES)
-        //     .setInputData(data)
-        //     .build();
-
-        // WorkManager.getInstance(context).enqueueUniquePeriodicWork(WORKER_PERIODIC_TAG, ExistingPeriodicWorkPolicy.KEEP, periodicWorkRequest);
-
-        // Services.getLogger().log("Next periodic work planned.");
+        return null;
     }
 
     // public Result doWork() {
@@ -245,31 +280,16 @@ public class WatcherWorker {
     //     return Result.success();
     // }
 
-    public void doWork() {
-        try {
-            doWorkInner("NORMAL");
-        } catch (Exception exception) {
-            logger.log(exception.getMessage());
-        }
+    private void sendBroadcastActionChange() {
+        Intent intent = new Intent();
+        intent.setAction(ACTION_CHANGE);
+        context.sendBroadcast(intent);
     }
 
-    public void doWorkInner(String mode) {
-        logger.log("Do work in mode %s", mode);
-
-        if (hzwatchService.isPriceError()) {
-            playerBeep.start();
-        }
-
-        String searchKey;
-
-        int i = 0;
-        while((searchKey = hzwatchService.getNextSearchKeyToSearch()) != null) {
-            processSearch(searchKey);
-            i++;
-
-            if (i >= 2) {
-                break;
-            }
-        }
+    private void sendBroadcastActionStateChange(String msg) {
+        Intent intent = new Intent();
+        intent.setAction(ACTION_STATE_CHANGE);
+        intent.putExtra("msg", msg);
+        context.sendBroadcast(intent);
     }
 }

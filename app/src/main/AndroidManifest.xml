@@ -38,10 +38,6 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".service.WatcherService" />
-        <service android:name=".service.StorageSaverService" />
-
         <receiver android:name=".worker.WatcherAlarmReceiver" />
     </application>
-
 </manifest>
