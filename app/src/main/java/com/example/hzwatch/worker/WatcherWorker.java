@@ -101,13 +101,15 @@ public class WatcherWorker {
     }
 
     public static void planWatcherAlarm(Context context) {
+        // co 3 min, 5 co strona, zablokowane po ok 3h
+        // co 2 min, 7 co strona
         HzwatchService hzwatchService = Services.getHzwatchService();
 
         if (hzwatchService.isWatcherAlarmPlanned()) {
             return;
         }
 
-        Date plannedAt = Util.datePlusMinutes(new Date(), 1);
+        Date plannedAt = Util.datePlusMinutes(new Date(), 2);
 
         hzwatchService.saveWatcherAlarmPlanned(plannedAt);
 
@@ -188,7 +190,7 @@ public class WatcherWorker {
             processResponse(searchKey, response);
 
             try {
-                Thread.sleep(2000);
+                Thread.sleep(7000);
             } catch (InterruptedException e) {
                 logger.log("Thread interrupted. Message [%s].", e.getMessage());
             }

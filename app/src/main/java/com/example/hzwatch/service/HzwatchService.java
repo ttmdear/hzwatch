@@ -150,7 +150,7 @@ public class HzwatchService {
 
         WatcherAlarm watcherAlarm = watcherAlarmList.get(0);
 
-        Date date = Util.datePlusMinutes(watcherAlarm.getPlanedAt(), 2);
+        Date date = Util.datePlusMinutes(watcherAlarm.getPlanedAt(), 15);
 
         if (date.before(new Date())) {
             storage.deleteWatcherAlarm(-1);
