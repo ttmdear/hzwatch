@@ -9,10 +9,12 @@ import com.example.hzwatch.util.Util;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 public class HzwatchService {
     private final Storage storage;
 
+    private final Random RANDOM = new Random();
     private final Logger logger = Services.getLogger();
 
     public HzwatchService(Storage storage) {
@@ -173,7 +175,7 @@ public class HzwatchService {
         Date date = Util.date();
 
         searchLog.setAt(date);
-        searchLog.setNextSearchAt(Util.datePlusMinutes(date, 10));
+        searchLog.setNextSearchAt(Util.datePlusMinutes(date, 5 + RANDOM.nextInt(10)));
         searchLog.setProductsNumber(productsNumber);
 
         if (searchLog.getId() == null) {

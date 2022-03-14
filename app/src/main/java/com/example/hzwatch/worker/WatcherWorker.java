@@ -139,13 +139,13 @@ public class WatcherWorker {
 
         String searchKey;
 
-        int i = 0;
         while ((searchKey = hzwatchService.getNextSearchKeyToSearch()) != null) {
             processSearch(searchKey);
-            i++;
 
-            if (i >= 2) {
-                break;
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                logger.log("Thread interrupted. Message [%s].", e.getMessage());
             }
         }
     }
@@ -175,8 +175,6 @@ public class WatcherWorker {
         int productsNumber = 0;
         int page = 0;
 
-        // resolveCookie();
-
         while (true) {
             sendBroadcastActionStateChange(String.format("Szukam %s, liczba produktów %s", searchKey, productsNumber));
 
@@ -189,11 +187,7 @@ public class WatcherWorker {
             productsNumber += response.getData().getSearchProducts().getProducts().size();
             processResponse(searchKey, response);
 
-            try {
-                Thread.sleep(7000);
-            } catch (InterruptedException e) {
-                logger.log("Thread interrupted. Message [%s].", e.getMessage());
-            }
+            break;
         }
 
         hzwatchService.postSearch(searchKey, productsNumber);
