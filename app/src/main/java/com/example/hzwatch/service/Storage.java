@@ -37,6 +37,7 @@ public class Storage {
     private List<SearchLog> searchLogList;
     private List<LogEntry> logEntryList = new ArrayList<>();
     private List<WatcherAlarm> watcherAlarmList;
+    private boolean loaded = false;
 
     private boolean change = false;
     private Date savedAt = Util.date();
@@ -155,6 +156,10 @@ public class Storage {
         return change;
     }
 
+    public boolean isLoaded() {
+        return loaded;
+    }
+
     public void load() {
         FileInputStream fileIn;
 
@@ -162,6 +167,7 @@ public class Storage {
             fileIn = context.openFileInput(FILE_NAME);
         } catch (FileNotFoundException e) {
             initEmptyStorage();
+            loaded = true;
             return;
         }
 
@@ -170,8 +176,8 @@ public class Storage {
         try {
             hzwatchStorage = JSON_MAPPER.readValue(new InputStreamReader(fileIn, StandardCharsets.UTF_8), HzwatchStorage.class);
         } catch (IOException e) {
-            e.printStackTrace();
             initEmptyStorage();
+            loaded = true;
             return;
         }
 
@@ -183,6 +189,7 @@ public class Storage {
         watcherAlarmList = Util.emptyListIfNull(hzwatchStorage.getWatcherAlarmList());
 
         processPostLoad();
+        loaded = true;
     }
 
     public void loadTestData() {

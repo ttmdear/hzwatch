@@ -40,8 +40,12 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        storage.setContext(this);
-        storage.load();
+        if (!storage.isLoaded()) {
+            storage.setContext(this);
+            storage.load();
+        } else {
+            storage.save();
+        }
 
         Services.getInstance().initDefaultUncaughtExceptionHandler();
 

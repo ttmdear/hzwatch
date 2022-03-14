@@ -4,6 +4,7 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.util.Log;
@@ -36,6 +37,8 @@ import okhttp3.Response;
 public class WatcherWorker {
     public static final String ACTION_CHANGE = "WatcherWorker.Action.Change";
     public static final String ACTION_STATE_CHANGE = "WatcherWorker.Action.State.Change";
+    public static final String SHARED_PREFERENCES_KEY = "WatcherWorker";
+    public static final String SHARED_PREFERENCES_PLANNED_AT = "plannedAt";
 
     public static final Integer TIMER_INTERVAL = 10000;
 
@@ -120,6 +123,18 @@ public class WatcherWorker {
         alarmManager.setExact(AlarmManager.RTC_WAKEUP, plannedAt.getTime(), pendingIntent);
 
         Services.getLogger().log("Next work planned.");
+    }
+
+    public static boolean isWatcherAlarmPlanned(Context context) {
+        SharedPreferences preferences = context.getSharedPreferences(SHARED_PREFERENCES_KEY, Context.MODE_PRIVATE);
+
+        if (!preferences.contains(SHARED_PREFERENCES_PLANNED_AT)) {
+            return true;
+        }
+
+        // https://strefakodera.pl/programowanie/android-java/przechowywanie-danych-w-aplikacji-za-pomoca-sharedpreferences
+        // Date plannedAt = new Date(preferences.getLong(SHARED_PREFERENCES_PLANNED_AT, 0));
+        // Date date = Util.datePlusMinutes(watcherAlarm.getPlanedAt(), 15);
     }
 
     public void doWork() {
