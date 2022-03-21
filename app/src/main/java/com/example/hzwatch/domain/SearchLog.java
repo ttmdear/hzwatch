@@ -6,6 +6,7 @@ public class SearchLog extends Entity {
     private Date at;
     private Date nextSearchAt;
     private String searchKey;
+    private Date lastSearchAt;
     private int productsNumber;
 
     public SearchLog() {
@@ -45,5 +46,13 @@ public class SearchLog extends Entity {
     public void setSearchKey(String searchKey) {
         this.searchKey = searchKey;
         notifyChange();
+    }
+
+    public Date getLastSearchAt() {
+        return lastSearchAt;
+    }
+
+    public void setLastSearchAt(Date lastSearchAt) {
+        this.lastSearchAt = lastSearchAt;
     }
 }

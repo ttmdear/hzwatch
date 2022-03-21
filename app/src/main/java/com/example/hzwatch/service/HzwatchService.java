@@ -80,15 +80,9 @@ public class HzwatchService {
             return null;
         }
 
-        SortUtil.sortByDateAsc(searchLogList, SearchLog::getNextSearchAt);
-
-        Date date = Util.date();
+        com.ttmdear.toolbox.util.SortUtil.sortAsc(searchLogList, SearchLog::getLastSearchAt);
 
         for (SearchLog searchLog : searchLogList) {
-            if (!date.after(searchLog.getNextSearchAt())) {
-                continue;
-            }
-
             SearchKey searchKey = Util.find(searchKeyList, searchKey1 -> searchKey1.getValue().equals(searchLog.getSearchKey()));
 
             if (searchKey != null) {
@@ -176,6 +170,7 @@ public class HzwatchService {
 
         searchLog.setAt(date);
         searchLog.setNextSearchAt(Util.datePlusMinutes(date, 5 + RANDOM.nextInt(10)));
+        searchLog.setLastSearchAt(date);
         searchLog.setProductsNumber(productsNumber);
 
         if (searchLog.getId() == null) {

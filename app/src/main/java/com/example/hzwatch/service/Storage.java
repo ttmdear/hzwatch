@@ -81,6 +81,17 @@ public class Storage {
     public void create(LogEntry logEntry) {
         logEntry.setStorage(this);
         logEntryList.add(logEntry);
+
+        if (logEntryList.size() > 100) {
+            List<LogEntry> n = new ArrayList<>(50);
+
+            for (int i = 50; i < logEntryList.size(); i++) {
+                n.add(logEntryList.get(i));
+            }
+
+            logEntryList = n;
+        }
+
         notifyChange();
     }
 

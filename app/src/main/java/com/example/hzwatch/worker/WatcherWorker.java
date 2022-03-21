@@ -112,7 +112,8 @@ public class WatcherWorker {
             return;
         }
 
-        Date plannedAt = Util.datePlusMinutes(new Date(), 2);
+        Date plannedAt = Util.datePlusMinutes(new Date(), 3);
+        // Date plannedAt = Util.datePlusSeconds(new Date(), 20);
 
         hzwatchService.saveWatcherAlarmPlanned(plannedAt);
 
@@ -123,18 +124,6 @@ public class WatcherWorker {
         alarmManager.setExact(AlarmManager.RTC_WAKEUP, plannedAt.getTime(), pendingIntent);
 
         Services.getLogger().log("Next work planned.");
-    }
-
-    public static boolean isWatcherAlarmPlanned(Context context) {
-        SharedPreferences preferences = context.getSharedPreferences(SHARED_PREFERENCES_KEY, Context.MODE_PRIVATE);
-
-        if (!preferences.contains(SHARED_PREFERENCES_PLANNED_AT)) {
-            return true;
-        }
-
-        // https://strefakodera.pl/programowanie/android-java/przechowywanie-danych-w-aplikacji-za-pomoca-sharedpreferences
-        // Date plannedAt = new Date(preferences.getLong(SHARED_PREFERENCES_PLANNED_AT, 0));
-        // Date date = Util.datePlusMinutes(watcherAlarm.getPlanedAt(), 15);
     }
 
     public void doWork() {
@@ -152,16 +141,10 @@ public class WatcherWorker {
             new Thread(playerBeep::start).start();
         }
 
-        String searchKey;
+        String searchKey = hzwatchService.getNextSearchKeyToSearch();
 
-        while ((searchKey = hzwatchService.getNextSearchKeyToSearch()) != null) {
+        if (searchKey != null) {
             processSearch(searchKey);
-
-            try {
-                Thread.sleep(10000);
-            } catch (InterruptedException e) {
-                logger.log("Thread interrupted. Message [%s].", e.getMessage());
-            }
         }
     }
 

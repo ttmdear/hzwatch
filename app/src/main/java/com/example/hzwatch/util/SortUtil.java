@@ -78,6 +78,8 @@ public class SortUtil {
                 Date a = provider.resolve(value.get(i));
                 Date b = provider.resolve(value.get(i + 1));
 
+                boolean swap = false;
+
                 if (a.compareTo(b) > 0) {
                     T tmp = value.get(i);
                     value.set(i, value.get(i + 1));
