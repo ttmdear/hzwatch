@@ -173,6 +173,7 @@ public class WatcherWorker {
         int productsNumber = 0;
         int page = 0;
 
+        String cookies = resolveCookies()
         while (true) {
             sendBroadcastActionStateChange(String.format("Szukam %s, liczba produktów %s", searchKey, productsNumber));
 
