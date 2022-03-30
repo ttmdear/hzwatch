@@ -12,6 +12,8 @@ public class Services {
     private UiService uiService = null;
     private Logger logger = null;
     private ProductProcessor productProcessor = null;
+    private ParseHtmlService parseHtmlService = null;
+    private FetchService fetchService = null;
     private final UncaughtExceptionHandler uncaughtExceptionHandler;
 
     private Services() {
@@ -51,6 +53,26 @@ public class Services {
         }
 
         return services.logger;
+    }
+
+    public static FetchService getFetchService() {
+        Services services = getInstance();
+
+        if (services.fetchService == null) {
+            services.fetchService = new HtmlFetchService(getParseHtmlService());
+        }
+
+        return services.fetchService;
+    }
+
+    public static ParseHtmlService getParseHtmlService() {
+        Services services = getInstance();
+
+        if (services.parseHtmlService == null) {
+            services.parseHtmlService = new ParseHtmlService();
+        }
+
+        return services.parseHtmlService;
     }
 
     public static Storage getStorage() {

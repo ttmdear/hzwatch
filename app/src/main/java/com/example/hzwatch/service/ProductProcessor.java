@@ -27,6 +27,18 @@ public class ProductProcessor {
         return sum;
     }
 
+    private Double calcPriceSum(com.example.hzwatch.domain.Product product) {
+        Double sum = 0.0;
+
+        for (Double price : product.getPrices()) {
+            if (price != null) {
+                sum += price;
+            }
+        }
+
+        return sum;
+    }
+
     private boolean isProductToProcess(Product product) {
         if (product.getPrices() == null || product.getPrices().size() <= 1) {
             return false;
@@ -78,7 +90,62 @@ public class ProductProcessor {
         return new ProcessProductResult(false);
     }
 
+    public ProcessProductResult process(String searchKey, com.example.hzwatch.domain.Product product) {
+        // removeUnwantedPrices(product);
+
+        // if (!isProductToProcess(product)) {
+        //     return new ProcessProductResult(false);
+        // }
+
+        List<Double> prices = product.getPrices();
+
+        for (int i = 0; i < prices.size(); i++) {
+            double price = prices.get(i);
+            double avr = 0;
+            int divider = 0;
+
+            for (int j = 0; j < prices.size(); j++) {
+                if (i == j) continue;
+
+                divider++;
+                avr += prices.get(j);
+            }
+
+            avr = avr / divider;
+
+            if (price <= avr * 0.5) {
+                processPriceError(searchKey, product, price, avr);
+
+                return new ProcessProductResult(true);
+            }
+        }
+
+        return new ProcessProductResult(false);
+    }
+
     private void processPriceError(String searchKey, Product product, Double price, Double avr) {
+        PriceError priceError = hzwatchService.getPriceErrorByHzId(product.getId());
+
+        if (priceError == null) {
+            priceError = new PriceError();
+            priceError.setId(storage.id());
+
+            storage.create(priceError);
+        }
+
+        priceError.setHzId(product.getId());
+        priceError.setProduct(product.getTitle());
+        priceError.setSearchKey(searchKey);
+        priceError.setPriceSum(calcPriceSum(product));
+        priceError.setAt(Util.date());
+        priceError.setAvr(avr);
+        priceError.setPrice(price);
+        priceError.setMoved(false);
+
+        storage.setPriceError(true);
+    }
+
+    private void processPriceError(String searchKey, com.example.hzwatch.domain.Product product, Double price, Double avr) {
         PriceError priceError = hzwatchService.getPriceErrorByHzId(product.getId());
 
         if (priceError == null) {
